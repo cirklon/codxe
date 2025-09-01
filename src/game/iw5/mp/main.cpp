@@ -9,11 +9,72 @@ namespace iw5
 namespace mp
 {
 
+std::set<std::string> g_loaded_scripts;
+
+bool ContainsScript(const std::string &name)
+{
+    return g_loaded_scripts.find(name) != g_loaded_scripts.end();
+}
+
 // Swap byte order for 32-bit integers
 uint32_t SwapEndian(uint32_t value)
 {
     return ((value & 0x000000FF) << 24) | ((value & 0x0000FF00) << 8) | ((value & 0x00FF0000) >> 8) |
            ((value & 0xFF000000) >> 24);
+}
+
+void DumpScriptFileAsset(const ScriptFile *scriptfile)
+{
+    std::string filename = "game:\\_dump\\" + std::string(scriptfile->name) + ".gscbin";
+    std::ofstream file(filename.c_str(), std::ios::binary);
+    if (!file.is_open())
+    {
+        DbgPrint("ERROR: Failed to open output file for writing\n");
+        return;
+    }
+    // Write the custom header
+    const char header[] = "GSC\0";
+    file.write(header, sizeof(header) - 1); // Exclude the null terminator
+
+    // Write compressedLen in little-endian
+    uint32_t compressedLenLE = SwapEndian(static_cast<uint32_t>(scriptfile->compressedLen));
+    file.write(reinterpret_cast<const char *>(&compressedLenLE), sizeof(compressedLenLE));
+
+    // Write len in little-endian
+    uint32_t lenLE = SwapEndian(static_cast<uint32_t>(scriptfile->len));
+    file.write(reinterpret_cast<const char *>(&lenLE), sizeof(lenLE));
+
+    // Write bytecodeLen in little-endian
+    uint32_t bytecodeLenLE = SwapEndian(static_cast<uint32_t>(scriptfile->bytecodeLen));
+    file.write(reinterpret_cast<const char *>(&bytecodeLenLE), sizeof(bytecodeLenLE));
+
+    // Write buffer content as byte array[compressedLen]
+    if (scriptfile->buffer && scriptfile->compressedLen > 0)
+    {
+        file.write(scriptfile->buffer, scriptfile->compressedLen);
+    }
+    else
+    {
+        // Write zero bytes if no buffer or invalid length
+        std::vector<char> emptyBuffer(scriptfile->compressedLen, 0);
+        file.write(emptyBuffer.data(), emptyBuffer.size());
+    }
+
+    // Write bytecode as byte array[bytecodeLen]
+    if (scriptfile->bytecode && scriptfile->bytecodeLen > 0)
+    {
+        file.write(reinterpret_cast<const char *>(scriptfile->bytecode), scriptfile->bytecodeLen);
+    }
+    else
+    {
+        // Write zero bytes if no bytecode or invalid length
+        std::vector<char> emptyBytecode(scriptfile->bytecodeLen, 0);
+        file.write(emptyBytecode.data(), emptyBytecode.size());
+    }
+
+    file.close();
+
+    DbgPrint("INFO: Script file binary dumped successfully.\n");
 }
 
 /**
@@ -77,36 +138,46 @@ XAssetHeader *DB_FindXAssetHeader_Hook(XAssetType type, const char *name, int al
 {
     if (type == ASSET_TYPE_SCRIPTFILE)
     {
-        std::string modBasePath = "game:\\_codxe\\mods\\codjumper"; // Hardcoded for now
+        Config config;
+        LoadConfigFromFile(CONFIG_PATH, config);
+        std::string modBasePath = config.GetModBasePath();
         std::string overridePath = modBasePath + "\\" + name + ".gscbin";
         std::replace(overridePath.begin(), overridePath.end(), '/', '\\');
 
-        GSCBin gscbin;
-        if (!LoadGSCBin(overridePath.c_str(), gscbin))
+        if (!modBasePath.empty())
         {
-            DbgPrint("Failed to load GSC file.\n");
-        }
-        else
-        {
-            // Create a new
-            ScriptFile *scriptfile =
-                (ScriptFile *)PMem_AllocFromSource_NoDebug(sizeof(ScriptFile), 4, 0, PMEM_SOURCE_SCRIPT);
-            memset(scriptfile, 0, sizeof(ScriptFile));
+            GSCBin gscbin;
+            if (!LoadGSCBin(overridePath.c_str(), gscbin))
+            {
+                DbgPrint("Failed to load GSC file.\n");
+            }
+            else
+            {
+                // Create a new
+                ScriptFile *scriptfile =
+                    (ScriptFile *)PMem_AllocFromSource_NoDebug(sizeof(ScriptFile), 4, 0, PMEM_SOURCE_SCRIPT);
+                memset(scriptfile, 0, sizeof(ScriptFile));
 
-            scriptfile->name = name;
-            scriptfile->compressedLen = gscbin.compressedLen;
-            scriptfile->len = gscbin.len;
-            scriptfile->bytecodeLen = gscbin.bytecodeLen;
+                scriptfile->name = name;
+                scriptfile->compressedLen = gscbin.compressedLen;
+                scriptfile->len = gscbin.len;
+                scriptfile->bytecodeLen = gscbin.bytecodeLen;
 
-            char *buffer = (char *)PMem_AllocFromSource_NoDebug(gscbin.buffer.size(), 4, 0, PMEM_SOURCE_SCRIPT);
-            memcpy(buffer, gscbin.buffer.data(), gscbin.buffer.size());
-            scriptfile->buffer = buffer;
+                char *buffer = (char *)PMem_AllocFromSource_NoDebug(gscbin.buffer.size(), 4, 0, PMEM_SOURCE_SCRIPT);
+                memcpy(buffer, gscbin.buffer.data(), gscbin.buffer.size());
+                scriptfile->buffer = buffer;
 
-            unsigned __int8 *bytecode = PMem_AllocFromSource_NoDebug(gscbin.bytecode.size(), 4, 0, PMEM_SOURCE_SCRIPT);
-            memcpy(bytecode, gscbin.bytecode.data(), gscbin.bytecode.size());
-            scriptfile->bytecode = bytecode;
+                unsigned __int8 *bytecode = PMem_AllocFromSource_NoDebug(gscbin.bytecode.size(), 4,
+                                                                         // 0 Crashes on hardware, 2 crashes on Xenia
+                                                                         // Don't know why, but this works around it
+                                                                         xbox::InXenia() ? 0 : 2, PMEM_SOURCE_SCRIPT);
+                memcpy(bytecode, gscbin.bytecode.data(), gscbin.bytecode.size());
+                scriptfile->bytecode = bytecode;
 
-            return (XAssetHeader *)scriptfile;
+                g_loaded_scripts.insert(name);
+
+                return (XAssetHeader *)scriptfile;
+            }
         }
     }
 
@@ -120,10 +191,9 @@ Detour DB_IsXAssetDefault_Detour;
 
 bool DB_IsXAssetDefault_Hook(XAssetType type, const char *name)
 {
-    // Hardcoded for now
-    // Prevent "maps/mp/gametypes/cj" from being treated as a default asset
-    if (type == ASSET_TYPE_SCRIPTFILE && strcmp(name, "maps/mp/gametypes/cj") == 0)
-        return 0;
+    // Custom ScriptFile must return 0 to be loaded properly
+    if (type == ASSET_TYPE_SCRIPTFILE && ContainsScript(name))
+        return false;
 
     return DB_IsXAssetDefault_Detour.GetOriginal<DB_IsXAssetDefault_t>()(type, name);
 }
