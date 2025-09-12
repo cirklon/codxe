@@ -47,8 +47,9 @@ gentity_s *Weapon_RocketLauncher_Fire_Hook(gentity_s *ent, unsigned int weaponIn
                                            weaponParms *gunVel, struct lockonFireParms *lockParms,
                                            lockonFireParms *magicBullet)
 {
-    const auto result = Weapon_RocketLauncher_Fire_Detour.GetOriginal<decltype(Weapon_RocketLauncher_Fire)>()(
-        ent, weaponIndex, spread, wp, gunVel, lockParms, magicBullet);
+    // TEMPORARY: don't create an RPG entity to avoid shellshock on screen
+    // const auto result = Weapon_RocketLauncher_Fire_Detour.GetOriginal<decltype(Weapon_RocketLauncher_Fire)>()(
+    //     ent, weaponIndex, spread, wp, gunVel, lockParms, magicBullet);
 
     // COD4 logic for RPG knockback
     auto client = ent->client;
@@ -59,7 +60,7 @@ gentity_s *Weapon_RocketLauncher_Fire_Hook(gentity_s *ent, unsigned int weaponIn
         ent->client->ps.velocity[2] = client->ps.velocity[2] - wp->forward[2] * 64.0f;
     }
 
-    return result;
+    return 0;
 }
 
 patches::patches()
