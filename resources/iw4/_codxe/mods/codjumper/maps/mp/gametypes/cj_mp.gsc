@@ -34,7 +34,11 @@ DeleteUnwantedEntities()
     ents = getentarray();
     foreach (ent in ents)
     {
+        // Death zones
         if (ent.classname == "trigger_hurt")
+            ent delete ();
+        // Radiation zones
+        else if (isdefined(ent.targetname) && ent.targetname == "radiation")
             ent delete ();
     }
 }
