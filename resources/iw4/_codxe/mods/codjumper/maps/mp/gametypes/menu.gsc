@@ -395,7 +395,13 @@ generateMenuOptions()
     self addMenu("barrier_menu", "main");
     self addMenuOption("barrier_menu", "Restore Barriers", ::RestoreBrushCollision);
     self addMenuOption("barrier_menu", "Disable Collision at player position",
-                       ::DisablePlayerClipOnIntersectingBrushes);
+                       ::DisablePlayerClipOnIntersectingBrushes_wrapper);
+}
+
+DisablePlayerClipOnIntersectingBrushes_wrapper()
+{
+    // I have no idea why this has to be wrapped like this to work
+    self DisablePlayerClipOnIntersectingBrushes();
 }
 
 changeMap(mapname)
