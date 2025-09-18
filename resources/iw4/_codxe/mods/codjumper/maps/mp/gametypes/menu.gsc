@@ -384,6 +384,8 @@ generateMenuOptions()
 
     self addMenuOption("main", "Cycle Pistol", ::CyclePistol);
 
+    self addMenuOption("main", "Toggle Speedometer", maps\mp\gametypes\cj_hud::ToggleHUD);
+
     self addMenuOption("main", "Clone Menu", ::menuAction, "CHANGE_MENU", "clone_menu");
     self addMenu("clone_menu", "main");
     self addMenuOption("clone_menu", "Spawn Clone", ::AddClone);

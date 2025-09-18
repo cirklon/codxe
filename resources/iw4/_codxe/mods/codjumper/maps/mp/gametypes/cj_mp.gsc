@@ -74,6 +74,7 @@ onPlayerSpawned()
         self thread RPGSwitch();
         self thread MonitorButtons();
         self thread MonitorPlayerCommands();
+        self thread maps\mp\gametypes\cj_hud::StartHUD();
     }
 }
 
