@@ -156,7 +156,7 @@ getMenuText()
  */
 initMenuHudElem()
 {
-    menuWidth = int(level.SCREEN_MAX_WIDTH * 0.25); // force int because shaders dimensions won't work with floats
+    menuWidth = int(level.SCREEN_MAX_WIDTH * 0.2); // force int because shaders dimensions won't work with floats
     menuTextPaddingLeft = 5;
     menuScrollerAlpha = 0.7;
 
