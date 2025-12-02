@@ -21,13 +21,14 @@
 #include <xgraphics.h>
 #include <io.h>
 #include <xjson.h>
-using namespace std::tr1;
+#include <rtcapi.h>
 
 // Project-specific includes
 #include "detour.h"
 #include "filesystem.h"
 #include "version.h"
-#include "xboxkrnl.h"
+#include "xkelib.h"
+#include "xbox360.h"
 #include "plugin.h"
 
 // Common includes
@@ -101,3 +102,5 @@ using namespace std::tr1;
  *
  * This will include all commonly used headers for the project.
  */
+
+#include "compat.h"

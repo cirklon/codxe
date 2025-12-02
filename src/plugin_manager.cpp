@@ -6,22 +6,15 @@ PluginManager::PluginManager()
 {
     this->InitConfig();
 
-    if (xbox::InXenia())
+    if (xbox::IsXenia())
     {
         DbgPrint("[codxe][PluginManager] Running in Xenia environment, skipping plugin manager initialization.\n");
-        OnTitleIDChanged(xbox::XamGetCurrentTitleId());
+        OnTitleIDChanged(XamGetCurrentTitleId());
         return;
     }
 
     // Start the monitoring thread
-    xbox::ExCreateThread(&m_monitor_thread,          // out: thread handle
-                         0,                          // stack size (0 = default)
-                         nullptr,                    // out: thread id (optional)
-                         nullptr,                    // api thread startup (reserved; usually nullptr)
-                         &PluginManager::ThreadProc, // must be WINAPI (__stdcall)
-                         this,                       // LPVOID parameter
-                         2                           // creation flags
-    );
+    ExCreateThread(&m_monitor_thread, 0, nullptr, nullptr, &PluginManager::ThreadProc, this, EX_CREATE_FLAG_SYSTEM);
 }
 
 PluginManager::~PluginManager()
@@ -125,7 +118,7 @@ DWORD WINAPI PluginManager::ThreadProc(LPVOID param)
 
     while (manager->m_should_run)
     {
-        const uint32_t current_title_id = xbox::XamGetCurrentTitleId();
+        const uint32_t current_title_id = XamGetCurrentTitleId();
         if (current_title_id != manager->m_current_title_id)
         {
             manager->OnTitleIDChanged(current_title_id);
@@ -163,7 +156,7 @@ void PluginManager::OnTitleIDChanged(uint32_t title_id)
     m_current_title_id = title_id;
 
     // If running in Xenia, we might not need to wait long for the game to load
-    if (!xbox::InXenia())
+    if (!xbox::IsXenia())
     {
         Sleep(2000); // Allow some time for the game to load
     }

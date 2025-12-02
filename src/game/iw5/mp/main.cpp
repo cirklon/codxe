@@ -171,7 +171,7 @@ XAssetHeader *DB_FindXAssetHeader_Hook(XAssetType type, const char *name, int al
                 unsigned __int8 *bytecode = PMem_AllocFromSource_NoDebug(gscbin.bytecode.size(), 4,
                                                                          // 0 Crashes on hardware, 2 crashes on Xenia
                                                                          // Don't know why, but this works around it
-                                                                         xbox::InXenia() ? 0 : 2, PMEM_SOURCE_SCRIPT);
+                                                                         xbox::IsXenia() ? 0 : 2, PMEM_SOURCE_SCRIPT);
                 memcpy(bytecode, gscbin.bytecode.data(), gscbin.bytecode.size());
                 scriptfile->bytecode = bytecode;
 

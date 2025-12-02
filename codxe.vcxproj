@@ -157,7 +157,7 @@
       <ClCompile Include="src\detour.cpp" />
       <ClCompile Include="src\filesystem.cpp" />
       <ClCompile Include="src\plugin_manager.cpp" />
-      <ClCompile Include="src\xboxkrnl.cpp" />
+      <ClCompile Include="src\xbox360.cpp" />
   </ItemGroup>
   <ItemGroup>
       <ClInclude Include="src\common\branding.h" />
@@ -252,6 +252,6 @@
       <ClInclude Include="src\filesystem.h" />
       <ClInclude Include="src\plugin_manager.h" />
       <ClInclude Include="src\plugin.h" />
-      <ClInclude Include="src\xboxkrnl.h" />
+      <ClInclude Include="src\xbox360.h" />
   </ItemGroup>
 </Project>
