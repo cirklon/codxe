@@ -144,7 +144,15 @@ static auto Scr_MakeArray = reinterpret_cast<void (*)()>(0x82210CA0);
 static auto Scr_ObjectError = reinterpret_cast<void (*)(const char *error)>(0x8220FDD0);
 static auto Scr_ParamError = reinterpret_cast<void (*)(unsigned int index, const char *error)>(0x8220FE08);
 
-static auto SV_ClientThink = reinterpret_cast<void (*)(client_t *cl, usercmd_s *cmd)>(0x82208448);
+typedef void (*SV_ClientThink_t)(client_t *cl, usercmd_s *cmd);
+static SV_ClientThink_t SV_ClientThink = reinterpret_cast<SV_ClientThink_t>(0x82208448);
+
+typedef void (*SV_BotUserMove_t)(client_t *cl);
+static SV_BotUserMove_t SV_BotUserMove = reinterpret_cast<SV_BotUserMove_t>(0x822009A8);
+
+typedef playerState_s *(*SV_GameClientNum_t)(int num);
+static SV_GameClientNum_t SV_GameClientNum = reinterpret_cast<SV_GameClientNum_t>(0x82204250);
+
 static auto SV_Cmd_ArgvBuffer = reinterpret_cast<void (*)(int arg, char *buffer, int bufferLength)>(0x82239F48);
 static auto SV_GameSendServerCommand =
     reinterpret_cast<void (*)(int clientNum, svscmd_type type, const char *text)>(0x82204BB8);
