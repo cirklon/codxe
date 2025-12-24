@@ -265,67 +265,12 @@ void Load_MapEntsPtr_Hook()
     }
 }
 
-const float colorWhiteRGBA[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-
-void DrawFixedFPS()
-{
-    static dvar_s *pm_fixed_fps = Dvar_FindMalleableVar("pm_fixed_fps");
-
-    char buff[16];
-    sprintf_s(buff, "%d", pm_fixed_fps->current.integer);
-
-    static Font_s *font = R_RegisterFont("fonts/bigDevFont");
-    float x = 620 * scrPlaceFullUnsafe.scaleVirtualToFull[0];
-    float y = 15 * scrPlaceFullUnsafe.scaleVirtualToFull[1];
-    R_AddCmdDrawText(buff, 16, font, x, y, 1.0, 1.0, 0.0, colorWhiteRGBA, 0);
-}
-
 Detour UI_Refresh_Detour;
 
 void UI_Refresh_Hook(int localClientNum)
 {
     UI_Refresh_Detour.GetOriginal<decltype(UI_Refresh)>()(localClientNum);
     CheckKeyboardCompletion();
-}
-
-Detour Pmove_Detour;
-
-// https://github.com/kejjjjj/iw3sptool/blob/17b669233a1ad086deed867469dc9530b84c20e6/iw3sptool/bg/bg_pmove.cpp#L11
-void Pmove_Hook(pmove_t *pm)
-{
-    static dvar_s *pm_fixed_fps_enable = Dvar_FindMalleableVar("pm_fixed_fps_enable");
-    static dvar_s *pm_fixed_fps = Dvar_FindMalleableVar("pm_fixed_fps");
-
-    if (!pm_fixed_fps_enable->current.enabled)
-        return Pmove_Detour.GetOriginal<decltype(Pmove)>()(pm);
-
-    int msec = 0;
-    int cur_msec = 1000 / pm_fixed_fps->current.integer;
-
-    pm->cmd.serverTime = ((pm->cmd.serverTime + (cur_msec < 2 ? 2 : cur_msec) - 1) / cur_msec) * cur_msec;
-
-    int finalTime = pm->cmd.serverTime;
-
-    if (finalTime < pm->ps->commandTime)
-    {
-        return; // should not happen
-    }
-
-    if (finalTime > pm->ps->commandTime + 1000)
-        pm->ps->commandTime = finalTime - 1000;
-    pm->numtouch = 0;
-
-    while (pm->ps->commandTime != finalTime)
-    {
-        msec = finalTime - pm->ps->commandTime;
-
-        if (msec > cur_msec)
-            msec = cur_msec;
-
-        pm->cmd.serverTime = msec + pm->ps->commandTime;
-        PmoveSingle(pm);
-        memcpy(&pm->oldcmd, &pm->cmd, sizeof(pm->oldcmd));
-    }
 }
 
 /**
@@ -379,23 +324,7 @@ IW3_MP_Plugin::IW3_MP_Plugin()
     cmd_function_s *cmdinput_VAR = new cmd_function_s;
     Cmd_AddCommandInternal("cmdinput", Cmd_cmdinput_f, cmdinput_VAR);
 
-    Dvar_RegisterBool("pm_fixed_fps_enable", false, 0, "Enable fixed FPS mode");
-    Dvar_RegisterInt("pm_fixed_fps", 250, 0, 1000, 0, "Fixed FPS value");
-    Pmove_Detour = Detour(Pmove, Pmove_Hook);
-    Pmove_Detour.Install();
-
-    Events::OnCG_DrawActive(
-        []()
-        {
-            CheckKeyboardCompletion();
-
-            static dvar_s *pm_fixed_fps_enable = Dvar_FindMalleableVar("pm_fixed_fps_enable");
-
-            if (pm_fixed_fps_enable->current.enabled)
-            {
-                DrawFixedFPS();
-            }
-        });
+    Events::OnCG_DrawActive([]() { CheckKeyboardCompletion(); });
 }
 
 IW3_MP_Plugin::~IW3_MP_Plugin()
@@ -404,8 +333,6 @@ IW3_MP_Plugin::~IW3_MP_Plugin()
 
     CL_GamepadButtonEvent_Detour.Remove();
     Load_MapEntsPtr_Detour.Remove();
-
-    Pmove_Detour.Remove();
 }
 
 } // namespace mp
