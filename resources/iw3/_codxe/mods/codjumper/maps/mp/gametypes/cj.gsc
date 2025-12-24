@@ -6,9 +6,6 @@ init()
 {
 	precacheShader("reticle_flechette"); // Precache the reticle shader for Forge
 
-	// Replaced by the build script
-	level.VERSION = "__VERSION__";
-
 	// Virtual resolution for HUD elements; scaled to real monitor dimensions by the game engine
 	level.SCREEN_MAX_WIDTH = 640;
 	level.SCREEN_MAX_HEIGHT = 480;
