@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "scr_vm_functions.h"
+#include "gsc_functions.h"
 #include "g_scr_main.h"
 
 namespace iw3
@@ -48,13 +48,13 @@ void GScr_CbufAddText()
     Cbuf_AddText(0, text);
 }
 
-scr_vm_functions::scr_vm_functions()
+gsc_functions::gsc_functions()
 {
     Scr_AddFunction("exec", GScr_CbufAddText, 0);
     Scr_AddFunction("getplayerclipbrushescontainingpoint", GSCrGetPlayerclipBrushesContainingPoint, 0);
 }
 
-scr_vm_functions::~scr_vm_functions()
+gsc_functions::~gsc_functions()
 {
 }
 } // namespace mp

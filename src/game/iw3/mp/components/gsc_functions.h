@@ -6,15 +6,15 @@ namespace iw3
 {
 namespace mp
 {
-class scr_vm_functions : public Module
+class gsc_functions : public Module
 {
   public:
-    scr_vm_functions();
-    ~scr_vm_functions();
+    gsc_functions();
+    ~gsc_functions();
 
     const char *get_name() override
     {
-        return "scr_vm_functions";
+        return "gsc_functions";
     };
 };
 } // namespace mp

@@ -6,11 +6,11 @@
 #include "components/cmds.h"
 #include "components/g_scr_main.h"
 #include "components/gsc_client_fields.h"
+#include "components/gsc_functions.h"
 #include "components/gsc_methods.h"
 #include "components/mpsp.h"
 #include "components/pm.h"
 #include "components/scr_parser.h"
-#include "components/scr_vm_functions.h"
 #include "components/sv_bots.h"
 #include "common/config.h"
 
@@ -1443,11 +1443,11 @@ IW3_MP_Plugin::IW3_MP_Plugin()
     RegisterModule(new cmds());
     RegisterModule(new g_scr_main());
     RegisterModule(new gsc_client_fields());
+    RegisterModule(new gsc_functions());
     RegisterModule(new gsc_methods());
     RegisterModule(new pm());
     RegisterModule(new mpsp());
     RegisterModule(new scr_parser());
-    RegisterModule(new scr_vm_functions());
     RegisterModule(new sv_bots());
 
     UI_Refresh_Detour = Detour(UI_Refresh, UI_Refresh_Hook);
