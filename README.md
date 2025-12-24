@@ -58,6 +58,12 @@ Dvars:
 - `noclip_brushes` - Disable player collision for clipmap brush indices e.g. `"50 123 647"`
   - `""` - Empty string restores original collision flag for all brushes.
   - `"*"` disable collision for all brushes.
+- `r_drawDynEnts` - Draw dynamic entities.
+- `bg_bobIdle` - Idle gun sway.
+- `cg_scoreboardLabel_Score` - Override label for 'Score' column on scoreboard.
+- `cg_scoreboardLabel_Kills` - Override label for 'Kills' column on scoreboard.
+- `cg_scoreboardLabel_Assists` - Override label for 'Assists' column on scoreboard.
+- `cg_scoreboardLabel_Deaths` - Override label for 'Deaths' column on scoreboard.
 
 GSC Entity fields:
 
@@ -90,6 +96,9 @@ GSC Methods:
 - `SetStance` - Changes current players stance.
 
   - Usage: `self setVelocity((0, 0, 300)); // Go up.`
+
+- `BotAction` - [Same as CoD4x](https://github.com/callofduty4x/CoD4x_Server/blob/master/scriptdocumentation/script_functions_reference.md#botentity-botactionsignaction)
+- `BotStop` - [Same as CoD4x](https://github.com/callofduty4x/CoD4x_Server/blob/master/scriptdocumentation/script_functions_reference.md#botentity-botstop)
 
 - `CloneBrushModelToScriptModel` - Clones a brush model's geometry to a script model entity.
   - Usage: `scriptModel CloneBrushModelToScriptModel(brushEntity);`
