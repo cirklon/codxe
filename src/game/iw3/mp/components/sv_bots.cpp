@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "events.h"
 #include "g_scr_main.h"
 #include "sv_bots.h"
 
@@ -34,6 +35,11 @@ struct BotMovementInfo_t
 };
 
 BotMovementInfo_t g_botai[MAX_CLIENTS];
+
+static void CleanBotArray()
+{
+    ZeroMemory(&g_botai, sizeof(g_botai));
+}
 
 Detour SV_BotUserMove_Detour;
 void SV_BotUserMove_Stub(client_t *cl)
@@ -124,6 +130,8 @@ sv_bots::sv_bots()
 
     Scr_AddMethod("botaction", Scr_BotAction, 0);
     Scr_AddMethod("botstop", Scr_BotStop, 0);
+
+    Events::OnVMShutdown(CleanBotArray);
 }
 
 sv_bots::~sv_bots()
