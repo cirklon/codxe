@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "cg.h"
+#include "events.h"
 #include "cj_tas.h"
+#include "cg.h"
 
 namespace iw3
 {
@@ -12,6 +13,8 @@ dvar_s *cg_scoreboardLabel_Score = nullptr;
 dvar_s *cg_scoreboardLabel_Kills = nullptr;
 dvar_s *cg_scoreboardLabel_Assists = nullptr;
 dvar_s *cg_scoreboardLabel_Deaths = nullptr;
+
+dvar_s *cg_draw_player_info = nullptr;
 
 Detour BG_CalculateWeaponPosition_IdleAngles_Detour;
 
@@ -108,6 +111,30 @@ void Menus_OpenByName_Hook(UiContext *dc, const char *menuName)
         Menus_OpenByName_Detour.GetOriginal<decltype(Menus_OpenByName)>()(dc, menuName);
 }
 
+static const float colorWhiteRGBA[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+void CG_DrawPlayerInfo()
+{
+    auto ps = CG_GetPredictedPlayerState(0);
+    int speed2D = static_cast<int>(sqrtf(ps->velocity[0] * ps->velocity[0] + ps->velocity[1] * ps->velocity[1]));
+
+    char buff[256];
+    sprintf_s(buff,
+              "x: %.6f\n"
+              "y: %.6f\n"
+              "z: %.6f\n"
+              "pitch: %.6f\n"
+              "yaw: %.6f\n"
+              "speed: %d\n",
+              ps->origin[0], ps->origin[1], ps->origin[2], ps->viewangles[0], ps->viewangles[1], speed2D);
+
+    static Font_s *consoleFont = R_RegisterFont("fonts/consoleFont");
+    const float x = 10.f * scrPlaceFullUnsafe.scaleVirtualToFull[0];
+    const float y = 50.f;
+
+    R_AddCmdDrawText(buff, 256, consoleFont, x, y, 1.0, 1.0, 0.0, colorWhiteRGBA, 0);
+}
+
 cg::cg()
 {
     Menus_OpenByName_Detour = Detour(Menus_OpenByName, Menus_OpenByName_Hook);
@@ -146,6 +173,18 @@ cg::cg()
 
     cg_scoreboardLabel_Deaths = Dvar_RegisterString("cg_scoreboardLabel_Deaths", "", DVAR_FLAG_NONE,
                                                     "Override label for 'Deaths' column on scoreboard");
+
+    cg_draw_player_info =
+        Dvar_RegisterBool("cg_draw_player_info", false, 0, "Draw player info (origin, viewangles, speed) on screen");
+
+    Events::OnCG_DrawActive(
+        []()
+        {
+            if (cg_draw_player_info->current.enabled)
+            {
+                CG_DrawPlayerInfo();
+            }
+        });
 }
 
 cg::~cg()
