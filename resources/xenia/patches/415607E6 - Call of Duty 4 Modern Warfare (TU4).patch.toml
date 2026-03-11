@@ -4,26 +4,10 @@ hash = "B4B0A3571D5160E2"                     # default.xex
 #media_id = "15E8CF88" # Disc (USA, Europe): http://redump.org/disc/12660
 
 [[patch]]
-name = "Native 1280x720 Resolution"
-desc = "Reduces flickering on upscaled resolutions x2 and x3"
+name = "Memory allocator expansion"
+desc = "Increases the engine's primary memory allocation from 0x19700000 (~407 MB) to 0x1E000000 (~480 MB)."
 author = "mo"
 is_enabled = true
-
-# R_SetWndParms - Updates window parameters
-# wndParms->sceneWidth
-[[patch.be16]]
-address = 0x8213537A
-value = 0x0500       # 1024 -> 1280
-
-# wndParms->sceneHeight
-[[patch.be16]]
-address = 0x8213537E
-value = 0x02D0       # 600 -> 720
-
-# wndParms->aaSamples
-[[patch.be16]]
-address = 0x82135376
-value = 0x0000       # 2 -> 0
 
 # PMem_Init - Updates memory allocation size for initialization
 [[patch.be16]]
