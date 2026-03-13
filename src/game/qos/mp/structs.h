@@ -10,13 +10,19 @@ struct scr_entref_t
     uint16_t classnum;
 };
 
+enum scr_builtin_type_t
+{
+    BUILTIN_ANY = 0x0,
+    BUILTIN_DEVELOPER_ONLY = 0x1,
+};
+
 typedef void (*BuiltinFunction)();
 
 struct BuiltinFunctionDef
 {
     const char *actionString;
     BuiltinFunction actionFunc;
-    int type;
+    scr_builtin_type_t type;
 };
 
 typedef void (*BuiltinMethod)(scr_entref_t entref);
@@ -25,7 +31,7 @@ struct BuiltinMethodDef
 {
     const char *actionString;
     void (*actionFunc)(scr_entref_t);
-    int type;
+    scr_builtin_type_t type;
 };
 
 struct gclient_s
@@ -101,6 +107,44 @@ static_assert(offsetof(clipMap_t, numSubModels) == 148, "");
 static_assert(offsetof(clipMap_t, cmodels) == 152, "");
 static_assert(offsetof(clipMap_t, numBrushes) == 156, "");
 static_assert(offsetof(clipMap_t, brushes) == 160, "");
+
+struct field_t
+{
+    int cursor;
+    int scroll;
+    int drawWidth;
+    int widthInPixels;
+    float charHeight;
+    int fixedSize;
+    char buffer[256];
+};
+static_assert(sizeof(field_t) == 0x118, "");
+
+struct KeyState
+{
+    int down;
+    int repeats;
+    const char *binding;
+};
+static_assert(sizeof(KeyState) == 0xC, "");
+
+enum LocSelInputState : __int32
+{
+    LOC_SEL_INPUT_NONE = 0x0,
+    LOC_SEL_INPUT_CONFIRM = 0x1,
+    LOC_SEL_INPUT_CANCEL = 0x2,
+};
+
+struct PlayerKeyState
+{
+    field_t chatField;
+    int chat_team;
+    int overstrikeMode;
+    int anyKeyDown;
+    KeyState keys[256];
+    LocSelInputState locSelInputState;
+};
+static_assert(sizeof(PlayerKeyState) == 0xD28, "");
 
 } // namespace mp
 } // namespace qos

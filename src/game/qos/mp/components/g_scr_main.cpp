@@ -8,7 +8,29 @@ namespace mp
 std::vector<BuiltinFunctionDef *> scr_functions;
 std::vector<BuiltinMethodDef *> scr_methods;
 
-void Scr_AddFunction(const char *name, BuiltinFunction func, int type)
+int CL_IsKeyPressed(const int localClientNum, const char *keyName)
+{
+    const int keynum = Key_StringToKeynum(keyName);
+    if (keynum >= 0)
+        return playerKeys[0].keys[keynum].down;
+    else
+        return 0;
+}
+
+void PlayerCmd_ButtonPressed(scr_entref_t entref)
+{
+    if (entref.classnum != 0)
+        Scr_ObjectError("not an entity");
+
+    const char *button = Scr_GetString(0);
+    if (!button || !*button)
+        Scr_Error("usage: <client> buttonPressed(<button name>)");
+
+    const int keypressed = CL_IsKeyPressed(0, button);
+    return Scr_AddInt(keypressed);
+}
+
+void Scr_AddFunction(const char *name, BuiltinFunction func, scr_builtin_type_t type)
 {
     BuiltinFunctionDef *newFunc = new BuiltinFunctionDef;
     newFunc->actionString = name;
@@ -17,7 +39,7 @@ void Scr_AddFunction(const char *name, BuiltinFunction func, int type)
     scr_functions.push_back(newFunc);
 }
 
-void Scr_AddMethod(const char *name, BuiltinMethod func, int type)
+void Scr_AddMethod(const char *name, BuiltinMethod func, scr_builtin_type_t type)
 {
     BuiltinMethodDef *newMethod = new BuiltinMethodDef;
     newMethod->actionString = name;
@@ -75,6 +97,8 @@ g_scr_main::g_scr_main()
 
     Scr_GetMethod_Detour = Detour(Scr_GetMethod, Scr_GetMethod_Hook);
     Scr_GetMethod_Detour.Install();
+
+    Scr_AddMethod("buttonpressed", PlayerCmd_ButtonPressed, BUILTIN_ANY);
 }
 
 g_scr_main::~g_scr_main()
