@@ -4,6 +4,22 @@ namespace qos
 {
 namespace mp
 {
+
+enum usercmd_button_bits
+{
+    CMD_BUTTON_ATTACK = 1,
+    CMD_BUTTON_SPRINT = 2,
+    CMD_BUTTON_USE_RELOAD = 32,
+    CMD_BUTTON_CROUCH = 512,
+    CMD_BUTTON_JUMP = 1024,
+    CMD_BUTTON_ADS = 2048,
+    CMD_BUTTON_FRAG = 16384,
+    CMD_COVER = 524288, // Active when cover button is pressed but not yet in cover
+    CMD_BUTTON_MELEE = 134217732,
+    CMD_BUTTON_NEXTFIRETYPE = 268435456, // Toggles single/full auto
+    CMD_BUTTON_MENU = 536870912,         // Menu is open
+};
+
 struct scr_entref_t
 {
     uint16_t entnum;
@@ -39,9 +55,15 @@ struct gclient_s
     char pad_0[13252];
     int noclip;
     int ufo;
+    char pad0[8];
+    int buttons;
+    char pad1[8];
+    int buttonsSinceLastFrame;
 };
 static_assert(offsetof(gclient_s, noclip) == 13252, "");
 static_assert(offsetof(gclient_s, ufo) == 13256, "");
+static_assert(offsetof(gclient_s, buttons) == 13268, "");
+static_assert(offsetof(gclient_s, buttonsSinceLastFrame) == 13280, "");
 
 struct gentity_s
 {

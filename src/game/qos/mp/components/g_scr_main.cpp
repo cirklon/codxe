@@ -19,15 +19,48 @@ int CL_IsKeyPressed(const int localClientNum, const char *keyName)
 
 void PlayerCmd_ButtonPressed(scr_entref_t entref)
 {
-    if (entref.classnum != 0)
-        Scr_ObjectError("not an entity");
+    GetPlayerEntity(entref);
 
     const char *button = Scr_GetString(0);
     if (!button || !*button)
         Scr_Error("usage: <client> buttonPressed(<button name>)");
 
     const int keypressed = CL_IsKeyPressed(0, button);
+
+    const gentity_s *ent = GetPlayerEntity(entref);
+    DbgPrint("BUTTONS: %d", ent->client->buttons);
+
     return Scr_AddInt(keypressed);
+}
+
+void PlayerCmd_ADSButtonPressed(scr_entref_t entref)
+{
+    const gentity_s *ent = GetPlayerEntity(entref);
+    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_ADS) != 0);
+}
+
+void PlayerCmd_JumpButtonPressed(scr_entref_t entref)
+{
+    const gentity_s *ent = GetPlayerEntity(entref);
+    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_JUMP) != 0);
+}
+
+void PlayerCmd_MeleeButtonPressed(scr_entref_t entref)
+{
+    const gentity_s *ent = GetPlayerEntity(entref);
+    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_MELEE) != 0);
+}
+
+void PlayerCmd_NextFireTypeButtonPressed(scr_entref_t entref)
+{
+    const gentity_s *ent = GetPlayerEntity(entref);
+    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_NEXTFIRETYPE) != 0);
+}
+
+void PlayerCmd_SprintButtonPressed(scr_entref_t entref)
+{
+    const gentity_s *ent = GetPlayerEntity(entref);
+    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_SPRINT) != 0);
 }
 
 void Scr_AddFunction(const char *name, BuiltinFunction func, scr_builtin_type_t type)
@@ -98,7 +131,13 @@ g_scr_main::g_scr_main()
     Scr_GetMethod_Detour = Detour(Scr_GetMethod, Scr_GetMethod_Hook);
     Scr_GetMethod_Detour.Install();
 
-    Scr_AddMethod("buttonpressed", PlayerCmd_ButtonPressed, BUILTIN_ANY);
+    Scr_AddMethod("buttonpressed", PlayerCmd_ButtonPressed, BUILTIN_ANY); // Only works for host buttons
+
+    Scr_AddMethod("adsbuttonpressed", PlayerCmd_ADSButtonPressed, BUILTIN_ANY);
+    Scr_AddMethod("jumpbuttonpressed", PlayerCmd_JumpButtonPressed, BUILTIN_ANY);
+    Scr_AddMethod("nextfiretypebuttonpressed", PlayerCmd_NextFireTypeButtonPressed, BUILTIN_ANY);
+    Scr_AddMethod("meleebuttonpressed", PlayerCmd_MeleeButtonPressed, BUILTIN_ANY);
+    Scr_AddMethod("sprintbuttonpressed", PlayerCmd_SprintButtonPressed, BUILTIN_ANY);
 }
 
 g_scr_main::~g_scr_main()

@@ -10,6 +10,9 @@ static auto cm = reinterpret_cast<clipMap_t *>(0x839CB3D0);
 static auto g_entities = reinterpret_cast<gentity_s *>(0x838B15A0);
 static const PlayerKeyState *playerKeys = reinterpret_cast<PlayerKeyState *>(0x82AAA2B0);
 
+typedef void (*Cbuf_AddText_t)(int localClientNum, const char *text);
+static Cbuf_AddText_t Cbuf_AddText = reinterpret_cast<Cbuf_AddText_t>(0x8225C288);
+
 static auto Hunk_AllocateTempMemoryHighInternal = reinterpret_cast<void *(*)(int size)>(0x822B89E8);
 
 static auto Scr_AddInt = reinterpret_cast<void (*)(int value)>(0x8227FBC8);
@@ -21,6 +24,10 @@ static auto Scr_GetMethod = reinterpret_cast<BuiltinMethod (*)(const char **pNam
 static auto Scr_GetVector = reinterpret_cast<void (*)(unsigned int index, float *vectorValue)>(0x82284618);
 static auto Scr_GetString = reinterpret_cast<char *(*)(unsigned int index)>(0x82284430);
 
+typedef gentity_s *(*GetPlayerEntity_t)(scr_entref_t entref);
+static GetPlayerEntity_t GetPlayerEntity = reinterpret_cast<GetPlayerEntity_t>(0x82232D20);
+
+static auto Scr_GetNumParam = reinterpret_cast<unsigned int (*)()>(0x8227FBB8);
 static auto Scr_Error = reinterpret_cast<void (*)(const char *error)>(0x82280180);
 static auto Scr_ObjectError = reinterpret_cast<void (*)(const char *error)>(0x822802B8);
 
