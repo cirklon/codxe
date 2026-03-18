@@ -62,17 +62,6 @@ void RemoveAllBrushCollision()
     }
 }
 
-Detour CM_LoadMap_Detour;
-
-void CM_LoadMap_Hook(const char *name, unsigned int *checksum)
-{
-    // Let the clip map load first
-    CM_LoadMap_Detour.GetOriginal<decltype(CM_LoadMap)>()(name, checksum);
-
-    // Save the contents of the brushes
-    SaveBrushContents();
-}
-
 std::vector<int> ParseSpaceSeparatedInts(const std::string &str)
 {
     std::vector<int> result;
@@ -122,9 +111,7 @@ clipmap::clipmap()
     noclip_brushes = Dvar_RegisterString("noclip_brushes", "", DVAR_CODINFO,
                                          "Space separated list of brushes to disable collision on.");
 
-    CM_LoadMap_Detour = Detour(CM_LoadMap, CM_LoadMap_Hook);
-    CM_LoadMap_Detour.Install();
-
+    Events::OnCG_Init(SaveBrushContents);
     Events::OnCG_DrawActive(clipmap::HandleBrushCollisionChange);
 }
 
