@@ -43,13 +43,9 @@ Usage example: `if (self ADSButtonPressed()) { ... }`
 
 Usage example: `if (self JumpButtonPressed()) { ... }`
 
-#### `MeleeButtonPressed()`
-
-Usage example: `if (self MeleeButtonPressed()) { ... }`
-
 #### `NextFireTypeButtonPressed()`
 
-On console this is binded to DPAD_UP and is used to control auto vs single shot guns.
+On console this is bound to DPAD_UP and is used to control auto vs single shot guns.
 
 Usage example: `if (self NextFireTypeButtonPressed()) { ... }`
 

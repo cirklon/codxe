@@ -26,10 +26,6 @@ void PlayerCmd_ButtonPressed(scr_entref_t entref)
         Scr_Error("usage: <client> buttonPressed(<button name>)");
 
     const int keypressed = CL_IsKeyPressed(0, button);
-
-    const gentity_s *ent = GetPlayerEntity(entref);
-    DbgPrint("BUTTONS: %d", ent->client->buttons);
-
     return Scr_AddInt(keypressed);
 }
 
@@ -43,12 +39,6 @@ void PlayerCmd_JumpButtonPressed(scr_entref_t entref)
 {
     const gentity_s *ent = GetPlayerEntity(entref);
     Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_JUMP) != 0);
-}
-
-void PlayerCmd_MeleeButtonPressed(scr_entref_t entref)
-{
-    const gentity_s *ent = GetPlayerEntity(entref);
-    Scr_AddInt(((ent->client->buttonsSinceLastFrame | ent->client->buttons) & CMD_BUTTON_MELEE) != 0);
 }
 
 void PlayerCmd_NextFireTypeButtonPressed(scr_entref_t entref)
@@ -123,7 +113,7 @@ BuiltinFunction Scr_GetFunction_Hook(const char **pName, int *type)
     }
 
     const BuiltinFunction pFunction = Scr_GetFunction_Detour.GetOriginal<decltype(Scr_GetFunction)>()(pName, type);
-    DbgPrint("QOS SP: Scr_GetFunction called for %s, type %d pFunction %p\n", *pName, *type, pFunction);
+    DbgPrint("QOS MP: Scr_GetFunction called for %s, type %d pFunction %p\n", *pName, *type, pFunction);
     return pFunction;
 }
 
@@ -144,7 +134,7 @@ BuiltinMethod Scr_GetMethod_Hook(const char **pName, int *type)
     }
 
     const BuiltinMethod pMethod = Scr_GetMethod_Detour.GetOriginal<decltype(Scr_GetMethod)>()(pName, type);
-    DbgPrint("QOS SP: Scr_GetMethod called for %s, type %d pMethod %p\n", *pName, *type, pMethod);
+    DbgPrint("QOS MP: Scr_GetMethod called for %s, type %d pMethod %p\n", *pName, *type, pMethod);
     return pMethod;
 }
 
@@ -163,7 +153,6 @@ g_scr_main::g_scr_main()
     Scr_AddMethod("adsbuttonpressed", PlayerCmd_ADSButtonPressed, BUILTIN_ANY);
     Scr_AddMethod("jumpbuttonpressed", PlayerCmd_JumpButtonPressed, BUILTIN_ANY);
     Scr_AddMethod("nextfiretypebuttonpressed", PlayerCmd_NextFireTypeButtonPressed, BUILTIN_ANY);
-    Scr_AddMethod("meleebuttonpressed", PlayerCmd_MeleeButtonPressed, BUILTIN_ANY);
     Scr_AddMethod("sprintbuttonpressed", PlayerCmd_SprintButtonPressed, BUILTIN_ANY);
 
     Scr_AddMethod("setplayervelocity", PlayerCmd_SetPlayerVelocity, BUILTIN_ANY);
