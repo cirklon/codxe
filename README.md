@@ -94,7 +94,6 @@ GSC Methods:
 - `RightButtonPressed` - Check if the player is moving right (left stick right).
 - `SetVelocity` - Changes current player velocity.
 - `SetStance` - Changes current players stance.
-
   - Usage: `self setVelocity((0, 0, 300)); // Go up.`
 
 - `BotAction` - [Same as CoD4x](https://github.com/callofduty4x/CoD4x_Server/blob/master/scriptdocumentation/script_functions_reference.md#botentity-botactionsignaction)
@@ -137,30 +136,30 @@ APAD_RIGHT
 
 Loading single player maps in multiplayer is a best effort approach. Lots of things are broken such as missing FX, player models, crashes etc.
 
-| Name                | Xbox 360 | Xenia |
-| ------------------- | :------: | :---: |
-| ac130.ff            |    🟢    |  🟢   |
-| aftermath.ff        |    🟢    |  🟢   |
-| airlift.ff          |    ❌    |  🟢   |
-| airplane.ff         |    🟢    |  🟢   |
-| ambush.ff           |    ❌    |  🟢   |
-| armada.ff           |    ❌    |  ❌   |
-| blackout.ff         |    ❌    |  🟢   |
-| bog_a.ff            |    ❌    |  🟢   |
-| bog_b.ff            |    ❌    |  🟢   |
-| cargoship.ff        |    🟢    |  🟢   |
-| coup.ff             |    ❌    |  🟢   |
-| hunted.ff           |    ❌    |  🟢   |
-| icbm.ff             |    ❌    |  🟢   |
-| jeepride.ff         |    ❌    |  🟢   |
-| killhouse.ff        |    ❌    |  🟢   |
-| launchfacility_a.ff |    ❌    |  🟢   |
-| launchfacility_b.ff |    ❌    |  🟢   |
-| scoutsniper.ff      |    ❌    |  🟢   |
-| simplecredits.ff    |    ❌    |  ❌   |
-| sniperescape.ff     |    ❌    |  🟢   |
-| village_assault.ff  |    ❌    |  🟢   |
-| village_defend.ff   |    ❌    |  🟢   |
+| Name                | Xbox 360 |       Xenia       |
+| ------------------- | :------: | :---------------: |
+| ac130.ff            |    🟢    |        🟢         |
+| aftermath.ff        |    🟢    |        🟢         |
+| airlift.ff          |    ❌    |        🟢         |
+| airplane.ff         |    🟢    |        🟢         |
+| ambush.ff           |    ❌    |        ❌         |
+| armada.ff           |    ❌    |        ❌         |
+| blackout.ff         |    ❌    | ❌ (xmodel limit) |
+| bog_a.ff            |    ❌    |        🟢         |
+| bog_b.ff            |    ❌    | ❌ (xmodel limit) |
+| cargoship.ff        |    🟢    |        🟢         |
+| coup.ff             |    ❌    |        🟢         |
+| hunted.ff           |    ❌    |        🟢         |
+| icbm.ff             |    ❌    |        🟢         |
+| jeepride.ff         |    ❌    |        🟢         |
+| killhouse.ff        |    ❌    |        🟢         |
+| launchfacility_a.ff |    ❌    |        🟢         |
+| launchfacility_b.ff |    ❌    | ❌ (xmodel limit) |
+| scoutsniper.ff      |    ❌    |        🟢         |
+| simplecredits.ff    |    ❌    |        ❌         |
+| sniperescape.ff     |    ❌    |        🟢         |
+| village_assault.ff  |    ❌    | ❌ (xmodel limit) |
+| village_defend.ff   |    ❌    | ❌ (xmodel limit) |
 
 NOTE: Xenia requires the [patch](<resources/xenia/patches/415607E6 - Call of Duty 4 Modern Warfare MP (TU4).patch.toml>) to increase memory installed.
 

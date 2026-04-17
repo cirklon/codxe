@@ -766,12 +766,6 @@ void DB_ReallocXAssetPool(XAssetType type, unsigned int newSize)
 
 mpsp::mpsp()
 {
-    // The larger maps only load on xenia anyway
-    if (xbox::IsXenia())
-    {
-        DB_ReallocXAssetPool(ASSET_TYPE_XMODEL, 10250);
-        DB_ReallocXAssetPool(ASSET_TYPE_MATERIAL, 2600);
-    }
 
     // BSP resolving
     Com_sprintf_Detour = Detour(Com_sprintf, Com_sprintf_Hook);
