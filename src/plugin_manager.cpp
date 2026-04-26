@@ -201,6 +201,7 @@ PluginManager::~PluginManager()
     {
         DbgPrint("[codxe][PluginManager] Cleaning up current plugin during shutdown\n");
         m_current_plugin.reset();
+        Detour::ResetTrampolinePool();
     }
 }
 
@@ -238,6 +239,7 @@ void PluginManager::OnTitleChanged(DWORD title_id, DWORD timestamp)
     {
         DbgPrint("[codxe][PluginManager] Cleaning up current plugin\n");
         m_current_plugin.reset();
+        Detour::ResetTrampolinePool();
     }
 
     // Special case
