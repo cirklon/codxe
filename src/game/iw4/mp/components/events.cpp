@@ -23,8 +23,6 @@ Detour Events::CG_DrawActive_Detour;
 
 Events::Events()
 {
-    cg_drawactive_callbacks.clear();
-
     CG_DrawActive_Detour = Detour(iw4::mp::CG_DrawActive, CG_DrawActive_Hook);
     CG_DrawActive_Detour.Install();
 }
@@ -32,4 +30,6 @@ Events::Events()
 Events::~Events()
 {
     CG_DrawActive_Detour.Remove();
+
+    cg_drawactive_callbacks.clear();
 }

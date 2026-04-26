@@ -71,10 +71,6 @@ Detour Events::Scr_ShutdownSystem_Detour;
 
 Events::Events()
 {
-    cg_drawactive_callbacks.clear();
-    cg_init_callbacks.clear();
-    vmshutdown_callbacks.clear();
-
     CG_DrawActive_Detour = Detour(CG_DrawActive, CG_DrawActive_Hook);
     CG_DrawActive_Detour.Install();
 
@@ -90,6 +86,10 @@ Events::~Events()
     CG_DrawActive_Detour.Remove();
     CG_Init_Detour.Remove();
     Scr_ShutdownSystem_Detour.Remove();
+
+    cg_drawactive_callbacks.clear();
+    cg_init_callbacks.clear();
+    vmshutdown_callbacks.clear();
 }
 
 } // namespace mp
