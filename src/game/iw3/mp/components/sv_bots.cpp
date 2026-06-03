@@ -92,8 +92,7 @@ void SV_BotUserMove_Stub(client_t *cl)
 
             if (!g_botai[clientNum].doMove)
             {
-                static const auto scr_const_movedone = Scr_AllocString("movedone");
-                Scr_Notify(ent, (unsigned __int16)scr_const_movedone, 0);
+                Scr_Notify(ent, scr_const->movedone, 0);
             }
         }
 
