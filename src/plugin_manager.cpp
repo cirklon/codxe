@@ -3,7 +3,6 @@
 
 enum TitleID : DWORD
 {
-    NONE = 0, // Shown when loading reloading a title
     DASHBOARD = 0xFFFE07D1,
 };
 
@@ -37,7 +36,7 @@ struct GameInfo
      * NOTE: This is not checked and is only for display/dev purposes.
      */
     const char *friendlyVersion;
-    std::unique_ptr<Plugin> (*createPlugin)(); // nullptr = no plugin for this exe
+    std::unique_ptr<Plugin> (*createPlugin)();
 };
 
 const GameInfo GAME_INFO[] = {
@@ -160,91 +159,67 @@ const GameInfo *FindGameInfo(DWORD title_id, DWORD timestamp)
     return nullptr;
 }
 
-/**
- * Get the time date stamp from the current title xex.
- */
-DWORD XexGetTimeDateStamp()
+PluginManager::PluginManager() : m_current_plugin(nullptr), m_trampoline_pool_baseline(0)
 {
-    const PLDR_DATA_TABLE_ENTRY entry = (PLDR_DATA_TABLE_ENTRY)GetModuleHandle(nullptr);
-    if (entry == nullptr)
-    {
-        return 0;
-    }
-    return entry->TimeDateStamp;
-}
-
-PluginManager::PluginManager() : m_monitor_active(false), m_monitor_thread(nullptr), m_current_plugin(nullptr)
-{
-    if (xbox::IsXenia())
-    {
-        DbgPrint("[codxe][PluginManager] Running in Xenia environment, skipping plugin manager initialization.\n");
-        OnTitleChanged(XamGetCurrentTitleId(), XexGetTimeDateStamp());
-        return;
-    }
-
-    // Start the monitoring thread
-    ExCreateThread(&m_monitor_thread, 0, nullptr, nullptr, &PluginManager::ThreadProc, this, EX_CREATE_FLAG_SYSTEM);
 }
 
 PluginManager::~PluginManager()
 {
-    // Signal the thread to stop and wait for it to finish
-    m_monitor_active = false;
-    if (m_monitor_thread)
+    ResetCurrentPlugin();
+}
+
+void PluginManager::SetTrampolinePoolBaseline(SIZE_T size)
+{
+    // The loader hook is process-lifetime state, while game plugin hooks are title-lifetime state.
+    // Reset plugin trampolines back to this baseline so unloading a game never overwrites the loader hook trampoline.
+    m_trampoline_pool_baseline = size;
+}
+
+bool PluginManager::LoadPlugin(const GameInfo *info)
+{
+    if (info == nullptr)
     {
-        WaitForSingleObject(m_monitor_thread, INFINITE);
-        CloseHandle(m_monitor_thread);
-        m_monitor_thread = nullptr;
+        return false;
     }
 
+    assert(info->createPlugin != nullptr);
+    DbgPrint("[codxe][PluginManager] Loading plugin.\n");
+
+    auto plugin = info->createPlugin();
+    if (!plugin)
+    {
+        DbgPrint("[codxe][PluginManager] Plugin factory returned nullptr.\n");
+        return false;
+    }
+
+    m_current_plugin = std::move(plugin);
+    DbgPrint("[codxe][PluginManager] Plugin loaded.\n");
+    return true;
+}
+
+void PluginManager::ResetCurrentPlugin()
+{
     if (m_current_plugin)
     {
-        DbgPrint("[codxe][PluginManager] Cleaning up current plugin during shutdown\n");
+        DbgPrint("[codxe][PluginManager] Unloading plugin.\n");
         m_current_plugin.reset();
-        Detour::ResetTrampolinePool();
+        Detour::ResetTrampolinePool(m_trampoline_pool_baseline);
+        DbgPrint("[codxe][PluginManager] Plugin unloaded.\n");
     }
 }
 
-DWORD WINAPI PluginManager::ThreadProc(LPVOID param)
+void PluginManager::OnExecutableLoadStarted()
 {
-    auto self = static_cast<PluginManager *>(param);
-    self->m_monitor_active = true;
-
-    DWORD prevTitleId = 0;
-    DWORD prevTimestamp = 0;
-
-    while (self->m_monitor_active)
-    {
-        const DWORD titleId = XamGetCurrentTitleId();
-        const DWORD xexTimestamp = XexGetTimeDateStamp();
-
-        if (titleId != prevTitleId || xexTimestamp != prevTimestamp)
-        {
-            self->OnTitleChanged(titleId, xexTimestamp);
-            prevTitleId = titleId;
-            prevTimestamp = xexTimestamp;
-        }
-        Sleep(100);
-    }
-
-    return 0;
+    // Fallback only. Normal cleanup runs from the kernel title-terminate notification before title memory is reset.
+    ResetCurrentPlugin();
 }
 
-void PluginManager::OnTitleChanged(DWORD title_id, DWORD timestamp)
+void PluginManager::OnExecutableLoaded(DWORD title_id, DWORD timestamp)
 {
-    DbgPrint("[codxe][PluginManager] Title ID changed to: 0x%08X\n", title_id);
-
-    // If there is a current plugin, clean it up
-    if (m_current_plugin)
+    if (title_id == DASHBOARD)
     {
-        DbgPrint("[codxe][PluginManager] Cleaning up current plugin\n");
-        m_current_plugin.reset();
-        Detour::ResetTrampolinePool();
-    }
-
-    // Special case
-    if (title_id == NONE || title_id == DASHBOARD)
         return;
+    }
 
     const GameInfo *info = FindGameInfo(title_id, timestamp);
     if (!info)
@@ -254,26 +229,11 @@ void PluginManager::OnTitleChanged(DWORD title_id, DWORD timestamp)
         return;
     }
 
-    DbgPrint("[codxe][PluginManager] Supported game found: '%s' (%s)\n", info->friendlyVersion, info->moduleName);
-    if (!info->createPlugin)
-    {
-        DbgPrint("[codxe][PluginManager] No plugin for this executable.\n");
-        return;
-    }
+    DbgPrint("[codxe][PluginManager] Game detected: '%s'.\n", info->friendlyVersion);
+    LoadPlugin(info);
+}
 
-    // On Xenia we can immediately init the plugin. On the xbox wait a bit for loading
-    if (!xbox::IsXenia())
-    {
-        Sleep(2000); // Allow some time for the game to load
-    }
-
-    auto plugin = info->createPlugin();
-    if (!plugin)
-    {
-        DbgPrint("[codxe][PluginManager] Plugin factory returned nullptr.\n");
-        return;
-    }
-
-    m_current_plugin = std::move(plugin);
-    DbgPrint("[codxe][PluginManager] Plugin started!\n");
+void PluginManager::OnTitleTerminate()
+{
+    ResetCurrentPlugin();
 }

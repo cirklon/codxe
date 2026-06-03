@@ -8,19 +8,13 @@ namespace mp
 {
 dvar_s *noclip_brushes = nullptr;
 
-std::vector<int> brushContents;
+static std::array<uint32_t, USHRT_MAX + 1> brushContents;
 
 void SaveBrushContents()
 {
-    if (!cm->isInUse)
-    {
-        DbgPrint("SaveBrushContents: cm is not in use\n");
-        return;
-    }
+    assert(cm->isInUse);
+    assert(static_cast<size_t>(cm->numBrushes) <= brushContents.size());
 
-    DbgPrint("SaveBrushContents: Saving brush contents for %d brushes\n", cm->numBrushes);
-
-    brushContents.resize(cm->numBrushes, 0);
     for (int i = 0; i < cm->numBrushes; ++i)
     {
         brushContents[i] = cm->brushes[i].contents;
@@ -29,18 +23,8 @@ void SaveBrushContents()
 
 void RestoreBrushContents()
 {
-    if (!cm->isInUse)
-    {
-        DbgPrint("RestoreBrushContents: cm is not in use\n");
-        return;
-    }
-
-    if (brushContents.size() != static_cast<size_t>(cm->numBrushes))
-    {
-        DbgPrint("RestoreBrushContents: size mismatch - saved: %zu, current: %d\n", brushContents.size(),
-                 cm->numBrushes);
-        return;
-    }
+    assert(cm->isInUse);
+    assert(static_cast<size_t>(cm->numBrushes) <= brushContents.size());
 
     for (int i = 0; i < cm->numBrushes; ++i)
     {
@@ -50,11 +34,7 @@ void RestoreBrushContents()
 
 void RemoveAllBrushCollision()
 {
-    if (!cm->isInUse)
-    {
-        DbgPrint("RemoveAllBrushCollision: cm is not in use\n");
-        return;
-    }
+    assert(cm->isInUse);
 
     for (int i = 0; i < cm->numBrushes; ++i)
     {
@@ -108,9 +88,12 @@ void clipmap::HandleBrushCollisionChange()
 
 clipmap::clipmap()
 {
-    noclip_brushes = Dvar_RegisterString("noclip_brushes", "", DVAR_CODINFO,
-                                         "Space separated list of brushes to disable collision on.");
-
+    Events::OnDvarInit(
+        []
+        {
+            noclip_brushes = Dvar_RegisterString("noclip_brushes", "", DVAR_CODINFO,
+                                                 "Space separated list of brushes to disable collision on.");
+        });
     Events::OnCG_Init(SaveBrushContents);
     Events::OnCG_DrawActive(clipmap::HandleBrushCollisionChange);
 }

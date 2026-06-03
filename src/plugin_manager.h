@@ -2,18 +2,23 @@
 
 #include "pch.h"
 
+struct GameInfo;
+
 class PluginManager
 {
   public:
     PluginManager();
     ~PluginManager();
 
+    void OnExecutableLoadStarted();
+    void OnExecutableLoaded(DWORD title_id, DWORD timestamp);
+    void OnTitleTerminate();
+    void SetTrampolinePoolBaseline(SIZE_T size);
+
   private:
     std::unique_ptr<Plugin> m_current_plugin;
+    SIZE_T m_trampoline_pool_baseline;
 
-    bool m_monitor_active;
-    HANDLE m_monitor_thread;
-
-    void OnTitleChanged(DWORD title_id, DWORD timestamp);
-    static DWORD WINAPI ThreadProc(LPVOID param);
+    bool LoadPlugin(const GameInfo *info);
+    void ResetCurrentPlugin();
 };

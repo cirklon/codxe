@@ -49,9 +49,6 @@ Detour Pmove_Detour;
 // https://github.com/kejjjjj/iw3sptool/blob/17b669233a1ad086deed867469dc9530b84c20e6/iw3sptool/bg/bg_pmove.cpp#L11
 void Pmove_Hook(pmove_t *pm)
 {
-    static dvar_s *pm_fixed_fps_enable = Dvar_FindMalleableVar("pm_fixed_fps_enable");
-    static dvar_s *pm_fixed_fps = Dvar_FindMalleableVar("pm_fixed_fps");
-
     if (!pm_fixed_fps_enable->current.enabled)
         return Pmove_Detour.GetOriginal<decltype(Pmove)>()(pm);
 
@@ -99,24 +96,19 @@ void DrawFixedFPS()
 
 pm::pm()
 {
-    pm_multi_bounce = Dvar_RegisterBool("pm_multi_bounce", false, DVAR_CODINFO, "Enable multi-bounces");
+    Events::OnDvarInit(
+        []
+        {
+            pm_multi_bounce = Dvar_RegisterBool("pm_multi_bounce", false, DVAR_CODINFO, "Enable multi-bounces");
 
-    // This allows FPS-dependent physics
-    pm_pc_mp_velocity_snap = Dvar_RegisterBool("pm_pc_mp_velocity_snap", false, DVAR_CODINFO,
-                                               "Enable PC Multiplayer style velocity snapping (round to nearest). ");
+            // This allows FPS-dependent physics
+            pm_pc_mp_velocity_snap =
+                Dvar_RegisterBool("pm_pc_mp_velocity_snap", false, DVAR_CODINFO,
+                                  "Enable PC Multiplayer style velocity snapping (round to nearest). ");
 
-    // Requires jump_slowdownEnable to be set to 0
-    PM_FoliageSounds_Detour = Detour(PM_FoliageSounds, PM_FoliageSounds_Hook);
-    PM_FoliageSounds_Detour.Install();
-
-    Sys_SnapVector_Detour = Detour(Sys_SnapVector, Sys_SnapVector_Hook);
-    Sys_SnapVector_Detour.Install();
-
-    pm_fixed_fps_enable = Dvar_RegisterBool("pm_fixed_fps_enable", false, 0, "Enable fixed FPS mode");
-    pm_fixed_fps = Dvar_RegisterInt("pm_fixed_fps", 250, 0, 1000, 0, "Fixed FPS value");
-
-    Pmove_Detour = Detour(Pmove, Pmove_Hook);
-    Pmove_Detour.Install();
+            pm_fixed_fps_enable = Dvar_RegisterBool("pm_fixed_fps_enable", false, 0, "Enable fixed FPS mode");
+            pm_fixed_fps = Dvar_RegisterInt("pm_fixed_fps", 250, 0, 1000, 0, "Fixed FPS value");
+        });
 
     Events::OnCG_DrawActive(
         []()
@@ -126,6 +118,16 @@ pm::pm()
                 DrawFixedFPS();
             }
         });
+
+    // Requires jump_slowdownEnable to be set to 0
+    PM_FoliageSounds_Detour = Detour(PM_FoliageSounds, PM_FoliageSounds_Hook);
+    PM_FoliageSounds_Detour.Install();
+
+    Sys_SnapVector_Detour = Detour(Sys_SnapVector, Sys_SnapVector_Hook);
+    Sys_SnapVector_Detour.Install();
+
+    Pmove_Detour = Detour(Pmove, Pmove_Hook);
+    Pmove_Detour.Install();
 }
 
 pm::~pm()

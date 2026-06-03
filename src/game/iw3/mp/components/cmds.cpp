@@ -1,12 +1,12 @@
 #include "pch.h"
+#include "command.h"
+#include "events.h"
 #include "cmds.h"
 
 namespace iw3
 {
 namespace mp
 {
-static cmd_function_s Cmd_Dumpraw_f_VAR;
-
 void Cmd_Dumpraw_f()
 {
     XAssetHeader files[2048];
@@ -143,7 +143,7 @@ cmds::cmds()
     Cmd_ExecFromFastFile_Detour = Detour(Cmd_ExecFromFastFile, Cmd_ExecFromFastFile_Hook);
     Cmd_ExecFromFastFile_Detour.Install();
 
-    Cmd_AddCommandInternal("dumpraw", Cmd_Dumpraw_f, &Cmd_Dumpraw_f_VAR);
+    command::add("dumpraw", Cmd_Dumpraw_f);
 }
 
 cmds::~cmds()
