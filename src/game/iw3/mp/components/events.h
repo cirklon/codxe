@@ -23,6 +23,7 @@ class Events : public Module
     static void OnVMShutdown(const std::function<void()> &callback);
     static void OnDvarInit(const std::function<void()> &callback);
     static void OnCmdInit(const std::function<void()> &callback);
+    static void OnUIRefresh(const std::function<void()> &callback);
 
   private:
     static std::vector<std::function<void()>> cg_drawactive_callbacks;
@@ -44,6 +45,10 @@ class Events : public Module
     static std::vector<std::function<void()>> cmdinit_callbacks;
     static Detour Cmd_Init_Detour;
     static void Cmd_Init_Hook();
+
+    static std::vector<std::function<void()>> ui_refresh_callbacks;
+    static Detour UI_Refresh_Detour;
+    static void UI_Refresh_Hook(int localClientNum);
 };
 } // namespace mp
 } // namespace iw3

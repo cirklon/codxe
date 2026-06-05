@@ -109,6 +109,25 @@ void Events::OnCmdInit(const std::function<void()> &callback)
 
 Detour Events::Cmd_Init_Detour;
 
+std::vector<std::function<void()>> Events::ui_refresh_callbacks;
+
+void Events::UI_Refresh_Hook(int localClientNum)
+{
+    UI_Refresh_Detour.GetOriginal<decltype(UI_Refresh)>()(localClientNum);
+
+    for (auto it = ui_refresh_callbacks.begin(); it != ui_refresh_callbacks.end(); ++it)
+    {
+        (*it)();
+    }
+}
+
+void Events::OnUIRefresh(const std::function<void()> &callback)
+{
+    ui_refresh_callbacks.emplace_back(callback);
+}
+
+Detour Events::UI_Refresh_Detour;
+
 Events::Events()
 {
     CG_DrawActive_Detour = Detour(CG_DrawActive, CG_DrawActive_Hook);
@@ -125,6 +144,9 @@ Events::Events()
 
     Cmd_Init_Detour = Detour(Cmd_Init, Cmd_Init_Hook);
     Cmd_Init_Detour.Install();
+
+    UI_Refresh_Detour = Detour(UI_Refresh, UI_Refresh_Hook);
+    UI_Refresh_Detour.Install();
 }
 
 Events::~Events()
@@ -134,12 +156,14 @@ Events::~Events()
     Scr_ShutdownSystem_Detour.Remove();
     Com_InitDvars_Detour.Remove();
     Cmd_Init_Detour.Remove();
+    UI_Refresh_Detour.Remove();
 
     cg_drawactive_callbacks.clear();
     cg_init_callbacks.clear();
     vmshutdown_callbacks.clear();
     dvarinit_callbacks.clear();
     cmdinit_callbacks.clear();
+    ui_refresh_callbacks.clear();
 }
 
 } // namespace mp

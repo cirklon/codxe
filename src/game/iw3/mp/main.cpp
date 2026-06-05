@@ -19,183 +19,10 @@
 #include "common/config.h"
 #include "main.h"
 
-// Structure to hold data for the active keyboard request
-struct KeyboardRequest
-{
-    wchar_t *resultText;
-    XOVERLAPPED overlapped;
-    std::function<void(bool, const wchar_t *)> callback;
-    DWORD maxLength;
-    bool isActive;
-
-    KeyboardRequest() : resultText(nullptr), callback(nullptr), maxLength(0), isActive(false)
-    {
-        ZeroMemory(&overlapped, sizeof(XOVERLAPPED));
-    }
-
-    ~KeyboardRequest()
-    {
-        if (resultText)
-        {
-            delete[] resultText;
-            resultText = nullptr;
-        }
-    }
-};
-
-// Global singleton for the keyboard request
-static KeyboardRequest g_keyboardRequest;
-
-// Function to show keyboard UI without blocking
-bool ShowKeyboardAsync(DWORD dwUserIndex, const wchar_t *defaultText, const wchar_t *titleText,
-                       const wchar_t *descriptionText, DWORD maxTextLength, DWORD keyboardType,
-                       std::function<void(bool, const wchar_t *)> callback)
-{
-    // If there's already an active keyboard request, don't allow another one
-    if (g_keyboardRequest.isActive)
-    {
-        DbgPrint("Keyboard UI is already active, ignoring request\n");
-        return false;
-    }
-
-    // Clean up any previous request
-    if (g_keyboardRequest.resultText)
-    {
-        delete[] g_keyboardRequest.resultText;
-        g_keyboardRequest.resultText = nullptr;
-    }
-
-    // Allocate new result text buffer (add 1 for null terminator)
-    DWORD bufferSize = maxTextLength + 1;
-    g_keyboardRequest.resultText = new wchar_t[bufferSize];
-    ZeroMemory(g_keyboardRequest.resultText, bufferSize * sizeof(wchar_t));
-    g_keyboardRequest.maxLength = bufferSize;
-    g_keyboardRequest.callback = callback;
-
-    // Zero out the overlapped structure
-    ZeroMemory(&g_keyboardRequest.overlapped, sizeof(XOVERLAPPED));
-
-    // Set up the keyboard UI with overlapped to make it non-blocking
-    HRESULT hr = XShowKeyboardUI(dwUserIndex, keyboardType, defaultText, titleText, descriptionText,
-                                 g_keyboardRequest.resultText, bufferSize, &g_keyboardRequest.overlapped);
-
-    if (FAILED(hr))
-    {
-        // Handle error
-        DbgPrint("Failed to show keyboard UI: 0x%08X\n", hr);
-        delete[] g_keyboardRequest.resultText;
-        g_keyboardRequest.resultText = nullptr;
-        return false;
-    }
-
-    // Mark as active
-    g_keyboardRequest.isActive = true;
-    DbgPrint("Keyboard UI requested, continuing with game loop...\n");
-    return true;
-}
-
-// Function to call in your game loop to check for keyboard completion
-void CheckKeyboardCompletion()
-{
-    // If no active keyboard request, nothing to do
-    if (!g_keyboardRequest.isActive)
-    {
-        return;
-    }
-
-    // Check if the operation has completed
-    if (XHasOverlappedIoCompleted(&g_keyboardRequest.overlapped))
-    {
-        DWORD result;
-        XGetOverlappedResult(&g_keyboardRequest.overlapped, &result, TRUE);
-
-        DbgPrint("Keyboard operation completed with result: 0x%08X\n", result);
-
-        // Operation completed
-        bool success = (result == ERROR_SUCCESS);
-
-        // Call the user callback with the result
-        if (g_keyboardRequest.callback)
-        {
-            if (success)
-            {
-                DbgPrint("Keyboard text entry successful\n");
-                g_keyboardRequest.callback(true, g_keyboardRequest.resultText);
-            }
-            else
-            {
-                DbgPrint("Keyboard operation failed or canceled\n");
-                g_keyboardRequest.callback(false, nullptr);
-            }
-        }
-
-        // Clean up
-        delete[] g_keyboardRequest.resultText;
-        g_keyboardRequest.resultText = nullptr;
-        g_keyboardRequest.isActive = false;
-    }
-    // If not completed, we'll check again next frame
-}
-
 namespace iw3
 {
 namespace mp
 {
-void Cmd_cmdinput_f()
-{
-    bool success = ShowKeyboardAsync(0,                // First controller
-                                     L"",              // Default text
-                                     L"Enter command", // Title
-                                     L"",              // Description
-                                     256,              // Max length
-                                     VKBD_DEFAULT,     // Keyboard type
-                                     [](bool success, const wchar_t *text)
-                                     {
-                                         if (success && text)
-                                         {
-                                             // Get the required buffer size
-                                             size_t wideLength = wcslen(text);
-                                             size_t mbBufferSize =
-                                                 wideLength * 4 + 1; // 4 bytes per character worst case
-
-                                             // Create buffer and convert
-                                             std::vector<char> mbBuffer(mbBufferSize);
-                                             wcstombs_s(nullptr, mbBuffer.data(), mbBufferSize, text, wideLength);
-
-                                             // Create string from the buffer
-                                             std::string result = mbBuffer.data();
-
-                                             Cbuf_AddText(0, result.c_str());
-                                         }
-                                         else
-                                         {
-                                             DbgPrint("Keyboard operation failed or was canceled\n");
-                                         }
-                                     });
-
-    if (!success)
-    {
-        DbgPrint("Failed to open keyboard UI\n");
-    }
-}
-
-Detour CL_GamepadButtonEvent_Detour;
-
-void CL_GamepadButtonEvent_Hook(int localClientNum, int controllerIndex, int key, int down, unsigned int time)
-{
-    CL_GamepadButtonEvent_Detour.GetOriginal<decltype(CL_GamepadButtonEvent)>()(localClientNum, controllerIndex, key,
-                                                                                down, time);
-
-    // Check if the client is disconnected (main menu)
-    if (clientUIActives[localClientNum].connectionState == CA_DISCONNECTED)
-    {
-        if (key == K_BUTTON_RSTICK && down)
-        {
-            Cmd_cmdinput_f();
-        }
-    }
-}
-
 Detour Load_MapEntsPtr_Detour;
 
 void Load_MapEntsPtr_Hook()
@@ -268,18 +95,10 @@ void Load_MapEntsPtr_Hook()
     }
 }
 
-Detour UI_Refresh_Detour;
-
-void UI_Refresh_Hook(int localClientNum)
-{
-    UI_Refresh_Detour.GetOriginal<decltype(UI_Refresh)>()(localClientNum);
-    console::frame();
-    CheckKeyboardCompletion();
-}
-
 /**
  * Patch out the signature checks used during fastfile authentication.
- * Signature data must still be present in the fastfile structure, but the values themselves may be zeroed.
+ * Signature data must still be present in
+ * the fastfile structure, but the values themselves may be zeroed.
  */
 void DisableFastfileAuth()
 {
@@ -317,24 +136,12 @@ IW3_MP_Plugin::IW3_MP_Plugin()
     RegisterModule(new scr_parser());
     RegisterModule(new sv_bots());
 
-    UI_Refresh_Detour = Detour(UI_Refresh, UI_Refresh_Hook);
-    UI_Refresh_Detour.Install();
-
-    CL_GamepadButtonEvent_Detour = Detour(CL_GamepadButtonEvent, CL_GamepadButtonEvent_Hook);
-    CL_GamepadButtonEvent_Detour.Install();
-
     Load_MapEntsPtr_Detour = Detour(Load_MapEntsPtr, Load_MapEntsPtr_Hook);
     Load_MapEntsPtr_Detour.Install();
-
-    command::add("cmdinput", Cmd_cmdinput_f);
-
-    Events::OnCG_DrawActive([] { CheckKeyboardCompletion(); });
 }
 
 IW3_MP_Plugin::~IW3_MP_Plugin()
 {
-    UI_Refresh_Detour.Remove();
-    CL_GamepadButtonEvent_Detour.Remove();
     Load_MapEntsPtr_Detour.Remove();
 }
 
