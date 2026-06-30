@@ -302,6 +302,101 @@ static void GScr_CloseFile()
     Scr_AddInt(result);
 }
 
+static void GScr_setGrenadeTimeLeft(scr_entref_t entref)
+{
+	auto ent = GetPlayerEntity(entref);
+	ent->client->ps.grenadeTimeLeft = Scr_GetInt(0);
+}
+
+static void GScr_doInstashoots(scr_entref_t entref)
+{
+	auto ent = GetPlayerEntity(entref);
+	ent->client->ps.weapState[0].weaponDelay = 0;
+	ent->client->ps.weapState[0].weaponTime = 0;
+	ent->client->ps.weapState[0].weaponRestrictKickTime = 1;
+	ent->client->ps.weapState[0].weaponState = 0x0;
+	ent->client->ps.weapState[1].weaponDelay = 0;
+	ent->client->ps.weapState[1].weaponTime = 0;
+	ent->client->ps.weapState[1].weaponRestrictKickTime = 1;
+	ent->client->ps.weapState[1].weaponState = 0x0;
+}
+
+static void GScr_setWeapAnim(scr_entref_t entref)
+{
+	auto ent = GetPlayerEntity(entref);
+	ent->client->ps.weapState[0].weapAnim = Scr_GetInt(0);
+	ent->client->ps.weapState[1].weapAnim = Scr_GetInt(0);
+}
+
+static void GScr_smoothAction(scr_entref_t entref)
+{
+	auto ent = GetPlayerEntity(entref);
+	ent->client->ps.weapState[0].weapAnim = 0x1;
+	ent->client->ps.weapState[1].weapAnim = 0x1;
+
+	ent->client->ps.weapState[0].weaponDelay = 0;
+	ent->client->ps.weapState[0].weaponTime = 0;
+	ent->client->ps.weapState[0].weaponRestrictKickTime = 0;
+	ent->client->ps.weapState[1].weaponDelay = 0;
+	ent->client->ps.weapState[1].weaponTime = 0;
+	ent->client->ps.weapState[1].weaponRestrictKickTime = 0;
+}
+
+static void GScr_Float()
+{
+
+}
+
+static void GScr_SetMemoryInt()
+{
+    uint32_t addr = ((uint32_t)Scr_GetInt(1) << 16) | ((uint32_t)Scr_GetInt(2) & 0xFFFF);
+    uint32_t val  = ((uint32_t)Scr_GetInt(3) << 16) | ((uint32_t)Scr_GetInt(4) & 0xFFFF);
+
+    switch (Scr_GetInt(0))
+    {
+    case 0:
+        *(volatile uint32_t *)addr = val;
+        break;
+    case 1:
+        *(volatile uint8_t *)addr = (uint8_t)val;
+        break;
+    }
+}
+
+static void GScr_SetMemoryString()
+{
+	auto address = (uintptr_t)Scr_GetInt(0);
+    auto str = Scr_GetString(1);
+    std::string xstr(str);
+    size_t length = xstr.length();
+
+    for (size_t i = 0; i < length; i++)
+    {
+        *(volatile uint8_t *)address = (uint8_t)str[i];
+        address++;
+    }
+
+    int space = 32 - (int)length;
+    for (int i = 0; i < space; i++)
+    {
+        *(volatile uint8_t *)address = 0x0;
+        address++;
+    }
+}
+
+static void GScr_depatchElevator()
+{
+    switch (Scr_GetInt(0))
+    {
+    case 0:
+        *(volatile uint16_t *)0x8210A2F0 = 0x419A;
+        break;
+    case 1:
+        *(volatile uint16_t *)0x8210A2F0 = 0x4800;
+        break;
+    }
+}
+
 g_scr_main::g_scr_main()
 {
     Scr_GetFunction_Detour = Detour(Scr_GetFunction, Scr_GetFunction_Hook);
@@ -318,6 +413,15 @@ g_scr_main::g_scr_main()
     Scr_AddFunction("openfile", GScr_OpenFile, BUILTIN_ANY);
     Scr_AddFunction("readstream", GScr_ReadStream, BUILTIN_ANY);
     Scr_AddFunction("closefile", GScr_CloseFile, BUILTIN_ANY);
+	Scr_AddFunction("setmemoryint", GScr_SetMemoryInt, BUILTIN_ANY);
+	Scr_AddFunction("setmemorystring", GScr_SetMemoryString, BUILTIN_ANY);
+	Scr_AddFunction("depatchelevator", GScr_depatchElevator, BUILTIN_ANY);
+
+	Scr_AddMethod("setgrenadetimeleft", GScr_setGrenadeTimeLeft, BUILTIN_ANY);
+	Scr_AddMethod("doinstashoots", GScr_doInstashoots, BUILTIN_ANY);
+	Scr_AddMethod("setweapanim", GScr_setWeapAnim, BUILTIN_ANY);
+	Scr_AddMethod("smoothaction", GScr_smoothAction, BUILTIN_ANY);
+
     Events::OnVMShutdown(CloseScriptIOFile);
 }
 

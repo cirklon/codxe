@@ -175,6 +175,8 @@ static auto Scr_GetObjectField = reinterpret_cast<void (*)(ClassNum classnum, in
 static auto Scr_GetString = reinterpret_cast<const char *(*)(unsigned int index)>(0x822B33A8);
 static auto Scr_AddInt = reinterpret_cast<void (*)(int value)>(0x822ADD18);
 static auto Scr_GetInt = reinterpret_cast<int (*)(unsigned int index)>(0x822B2D70);
+typedef void (*Scr_AddFloat_t)(float num);
+static Scr_AddFloat_t Scr_AddFloat = reinterpret_cast<Scr_AddFloat_t>(0x822ADD98);
 typedef double (*Scr_GetFloat_t)(unsigned int index);
 static Scr_GetFloat_t Scr_GetFloat = reinterpret_cast<Scr_GetFloat_t>(0x822B30D0);
 typedef void (*Scr_AddUndefined_t)();
@@ -184,6 +186,8 @@ static Scr_AddString_t Scr_AddString = reinterpret_cast<Scr_AddString_t>(0x822AD
 typedef void (*Scr_AddEntity_t)(gentity_s *ent);
 static Scr_AddEntity_t Scr_AddEntity = reinterpret_cast<Scr_AddEntity_t>(0x82259A60);
 static auto Scr_GetVector = reinterpret_cast<void (*)(unsigned int index, float *vectorValue)>(0x822B35B8);
+typedef int (*Scr_GetType_t)(unsigned int index);
+static Scr_GetType_t Scr_GetType = reinterpret_cast<Scr_GetType_t>(0x822B39F0);
 static auto Scr_Error = reinterpret_cast<void (*)(const char *error)>(0x822AE470);
 static auto GetEntity = reinterpret_cast<gentity_s *(*)(scr_entref_t entref)>(0x8223F4D0);
 typedef gentity_s *(*GetPlayerEntity_t)(scr_entref_t entref);

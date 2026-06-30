@@ -47,7 +47,7 @@ void DisableDvarProtection()
 patches::patches()
 {
     DisableFastfileAuth();
-    EnableBouncing();
+    //EnableBouncing();
     DisableDvarProtection();
 }
 
