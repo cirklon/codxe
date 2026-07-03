@@ -344,7 +344,7 @@ static void GScr_smoothAction(scr_entref_t entref)
 
 static void GScr_Float()
 {
-
+	Scr_AddFloat(1.0f * Scr_GetInt(0));
 }
 
 static void GScr_SetMemoryInt()
@@ -397,6 +397,24 @@ static void GScr_depatchElevator()
     }
 }
 
+static void GScr_ReplaceImage()
+{
+	auto image = Scr_GetString(0);
+	auto replacement = Scr_GetString(1);
+
+	auto imageXAsset = DB_FindXAssetHeader(XAssetType::ASSET_TYPE_IMAGE, image);
+	auto replacementXAsset = DB_FindXAssetHeader(XAssetType::ASSET_TYPE_IMAGE, replacement);
+
+	if (!imageXAsset.image || !replacementXAsset.image)
+        return;
+
+    char* originalName = imageXAsset.image->Name;
+
+    *imageXAsset.image = *replacementXAsset.image;
+
+    imageXAsset.image->Name = originalName;
+}
+
 g_scr_main::g_scr_main()
 {
     Scr_GetFunction_Detour = Detour(Scr_GetFunction, Scr_GetFunction_Hook);
@@ -416,6 +434,8 @@ g_scr_main::g_scr_main()
 	Scr_AddFunction("setmemoryint", GScr_SetMemoryInt, BUILTIN_ANY);
 	Scr_AddFunction("setmemorystring", GScr_SetMemoryString, BUILTIN_ANY);
 	Scr_AddFunction("depatchelevator", GScr_depatchElevator, BUILTIN_ANY);
+	Scr_AddFunction("replaceimage", GScr_ReplaceImage, BUILTIN_ANY);
+	Scr_AddFunction("float", GScr_Float, BUILTIN_ANY);
 
 	Scr_AddMethod("setgrenadetimeleft", GScr_setGrenadeTimeLeft, BUILTIN_ANY);
 	Scr_AddMethod("doinstashoots", GScr_doInstashoots, BUILTIN_ANY);

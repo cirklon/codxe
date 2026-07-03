@@ -47,7 +47,7 @@ void Cmd_UnlockStats_f()
         return;
     }
 
-    ExecuteCommand("setPlayerData prestige 10");
+    ExecuteCommand("setPlayerData prestige 1");
     ExecuteCommand("setPlayerData experience 2516000");
     ExecuteCommand("setPlayerData iconUnlocked cardicon_prestige10_02 1");
 

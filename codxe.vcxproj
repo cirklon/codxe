@@ -74,6 +74,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <!-- Precompiled header -->
+    <ClCompile Include="src\game\t6\mp\components\scr_parser.cpp" />
+    <ClCompile Include="src\game\t6\mp\main.cpp" />
     <ClCompile Include="src\pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
@@ -183,6 +185,10 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Precompiled header -->
+    <ClInclude Include="src\game\t6\mp\components\scr_parser.h" />
+    <ClInclude Include="src\game\t6\mp\main.h" />
+    <ClInclude Include="src\game\t6\mp\structs.h" />
+    <ClInclude Include="src\game\t6\mp\symbols.h" />
     <ClInclude Include="src\pch.h" />
     <ClInclude Include="src\common\branding.h" />
     <ClInclude Include="src\common\config.h" />

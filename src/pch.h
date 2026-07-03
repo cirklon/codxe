@@ -99,6 +99,11 @@
 #include "game/t5/sp/structs.h"
 #include "game/t5/sp/symbols.h"
 
+// T6-specific includes
+#include "game\t6\mp\main.h"
+#include "game\t6\mp\structs.h"
+#include "game\t6\mp\symbols.h"
+
 // QOS-specific includes
 #include "game/qos/sp/main.h"
 #include "game/qos/sp/structs.h"

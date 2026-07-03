@@ -2005,6 +2005,38 @@ static_assert(offsetof(StringTable, columnCount) == 0x4, "");
 static_assert(offsetof(StringTable, rowCount) == 0x8, "");
 static_assert(offsetof(StringTable, values) == 0xC, "");
 
+struct CardMemory
+{
+	int platform[2];
+};
+
+struct GfxImageStreamData
+{
+	unsigned __int16 width;
+	unsigned __int16 height;
+	unsigned int pixelSize;
+};
+
+struct GfxImage
+{
+	char _pad_0[52]; //0x00
+	_D3DFORMAT Format; //0x34
+	char mapType; //0x38
+	char semantic; //0x39
+	char category; //0x3A
+	char _padding_3B; //0x3B
+	CardMemory cardMemory; //0x3C
+	short Width; //0x40
+	short Height; //0x42
+	short Depth; //0x44
+	char levelCount; //0x46
+	bool cached; //0x47
+	//Pixels 0x48
+	char* Data; //0x48
+	GfxImageStreamData streams[4]; //0x4C
+	char* Name; //0x6C
+};
+
 union XAssetHeader
 {
     clipMap_t *clipMap;
@@ -2013,6 +2045,7 @@ union XAssetHeader
     MapEnts *mapEnts;
     RawFile *rawfile;
     StringTable *stringTable;
+	GfxImage *image;
     void *data;
 };
 
