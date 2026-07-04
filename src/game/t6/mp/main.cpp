@@ -12,7 +12,6 @@ T6_MP_Plugin::T6_MP_Plugin()
     DbgPrint("T6 MP: Registering modules\n");
     RegisterModule(new Config());
 	RegisterModule(new scr_parser());
-	DbgPrint("Putting this after scr_parser called\n");
 }
 
 } // namespace mp
