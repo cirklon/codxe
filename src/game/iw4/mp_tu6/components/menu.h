@@ -14,15 +14,24 @@ enum MenuOptionType
     OPT_INCREMENT,
 };
 
+enum MenuPage
+{
+    Main,
+    Player,
+    Weapons,
+};
+
 struct MenuOption
 {
     const char *label;
+    const char *description; // shown in the right-hand detail panel
+
     void (*callback)(int localClientNum);
     MenuOptionType type;
 
     bool *toggleValue;
 
-    const char **arrayValues;
+    const char *const *arrayValues;
     int arrayCount;
     int *arrayIndex;
 
@@ -30,13 +39,9 @@ struct MenuOption
     float incMin;
     float incMax;
     float incStep;
-};
 
-enum MenuPage
-{
-    Main,
-    Player,
-    Weapons,
+    MenuPage targetPage;
+    bool isSubmenu;
 };
 
 class menu : public Module
@@ -60,11 +65,13 @@ class menu : public Module
     static void Back();
     static void Toggle();
 
-    static MenuOption MakeAction(const char *label, void (*cb)(int));
-    static MenuOption MakeToggle(const char *label, bool *value, void (*cb)(int));
-    static MenuOption MakeArray(const char *label, const char **values, int count, int *index, void (*cb)(int));
-    static MenuOption MakeIncrement(const char *label, float *value, float min, float max, float step,
-                                     void (*cb)(int));
+    static MenuOption MakeSubmenu(const char *label, const char *description, MenuPage targetPage);
+    static void OpenSubmenuCallback(int localClientNum);
+
+    static MenuOption MakeAction(const char *label, const char *description, void (*cb)(int));
+    static MenuOption MakeToggle(const char *label, const char *description, bool *value, void (*cb)(int));
+    static MenuOption MakeArray(const char *label, const char *description, const char *const *values, int count, int *index, void (*cb)(int));
+    static MenuOption MakeIncrement(const char *label, const char *description, float *value, float min, float max, float step, void (*cb)(int));
 
     static void BackCallback(int localClientNum);
 
@@ -74,6 +81,7 @@ class menu : public Module
     static MenuPage s_page;
     static std::vector<MenuOption> s_options;
     static std::vector<MenuPage> s_pageStack;
+
     static Material *s_whiteMaterial;
     static Font_s *s_font;
 

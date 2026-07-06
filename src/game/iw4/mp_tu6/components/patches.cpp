@@ -94,7 +94,7 @@ patches::patches()
     DisableFastfileAuth();
     //EnableBouncing();
     DisableDvarProtection();
-	//Events::OnCG_DrawActive(TrySwapArrowsOnce);
+	Events::OnCG_DrawActive(TrySwapArrowsOnce);
 }
 
 patches::~patches()
