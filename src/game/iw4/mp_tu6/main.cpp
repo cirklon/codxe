@@ -14,6 +14,7 @@
 #include "components/stats.h"
 #include "components/sv_bots.h"
 #include "components/menu.h"
+#include "components\image_loader.h"
 #include "main.h"
 
 namespace iw4
@@ -38,7 +39,7 @@ IW4_MP_TU6_Plugin::IW4_MP_TU6_Plugin()
     RegisterModule(new scr_parser());
     RegisterModule(new stats());
     RegisterModule(new SVBots());
-	RegisterModule(new menu());
+	//RegisterModule(new menu());
 }
 
 } // namespace mp_tu6

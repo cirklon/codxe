@@ -415,6 +415,187 @@ static void GScr_ReplaceImage()
     imageXAsset.image->Name = originalName;
 }
 
+static bool IsMappedPointer(uint32_t ptr)
+{
+    return ((ptr >= 0x82000000 && ptr <= 0x83FFFFFF) ||
+            (ptr >= 0xA0000000 && ptr <= 0xBFFFFFFF));
+}
+
+static void DumpMemory(const char* title, const void* address, size_t size)
+{
+    const unsigned char* raw = (const unsigned char*)address;
+
+    DbgPrint("----- %s @ %08X -----",
+        title,
+        (unsigned int)(uintptr_t)address);
+
+    for (size_t row = 0; row < size; row += 16)
+    {
+        const uint32_t* d = (const uint32_t*)(raw + row);
+
+        DbgPrint(
+            "+%02X | %08X %08X %08X %08X | "
+            "%02X %02X %02X %02X "
+            "%02X %02X %02X %02X "
+            "%02X %02X %02X %02X "
+            "%02X %02X %02X %02X",
+
+            (unsigned int)row,
+
+            d[0], d[1], d[2], d[3],
+
+            raw[row+0], raw[row+1], raw[row+2], raw[row+3],
+            raw[row+4], raw[row+5], raw[row+6], raw[row+7],
+            raw[row+8], raw[row+9], raw[row+10], raw[row+11],
+            raw[row+12], raw[row+13], raw[row+14], raw[row+15]);
+    }
+}
+
+static void DumpAssetPointer(uint32_t ptr)
+{
+    DbgPrint("");
+    DbgPrint("Pointer @ +0x6C = %08X", ptr);
+
+    if (!IsMappedPointer(ptr))
+    {
+        DbgPrint("Pointer is outside mapped memory.");
+        return;
+    }
+
+    const char* str = (const char*)ptr;
+
+    DbgPrint("String: \"%s\"", str);
+
+    size_t len = strlen(str);
+
+    DumpMemory(
+        "Asset Header",
+        (const void*)ptr,
+        len + 0x80);
+}
+
+static void DumpImageRaw(const char* name)
+{
+    auto asset = DB_FindXAssetHeader(
+        XAssetType::ASSET_TYPE_IMAGE,
+        name);
+
+    if (!asset.image)
+    {
+        DbgPrint("Image '%s' not found.", name);
+        return;
+    }
+
+    GfxImage* img = asset.image;
+    unsigned char* raw = (unsigned char*)img;
+
+    DbgPrint("");
+    DbgPrint("========================================");
+    DbgPrint("Image '%s' @ %08X",
+        name,
+        (unsigned int)(uintptr_t)img);
+
+    DumpMemory("GfxImage", raw, 0x70);
+
+    uint32_t assetPtr =
+        *(uint32_t*)(raw + 0x6C);
+
+    DumpAssetPointer(assetPtr);
+
+    DbgPrint("");
+    DumpMemory("Next Record (+0x70)", raw + 0x70, 0x70);
+}
+
+static void CompareImages(
+    const char* first,
+    const char* second)
+{
+    auto a =
+        DB_FindXAssetHeader(
+            XAssetType::ASSET_TYPE_IMAGE,
+            first);
+
+    auto b =
+        DB_FindXAssetHeader(
+            XAssetType::ASSET_TYPE_IMAGE,
+            second);
+
+    if (!a.image || !b.image)
+    {
+        DbgPrint("compareimage: image missing.");
+        return;
+    }
+
+    unsigned char* A = (unsigned char*)a.image;
+    unsigned char* B = (unsigned char*)b.image;
+
+    DbgPrint("");
+    DbgPrint("===== Comparing '%s' -> '%s' =====",
+        first,
+        second);
+
+    for (int off = 0; off < 0x70; off += 4)
+    {
+        uint32_t av =
+            *(uint32_t*)(A + off);
+
+        uint32_t bv =
+            *(uint32_t*)(B + off);
+
+        if (av != bv)
+        {
+            DbgPrint(
+                "+0x%02X : %08X -> %08X",
+                off,
+                av,
+                bv);
+        }
+    }
+}
+
+static void GScr_DumpImage()
+{
+    if (Scr_GetNumParam() != 1)
+        Scr_Error("Usage: dumpimage(<image>)");
+
+    DumpImageRaw(Scr_GetString(0));
+}
+
+static void GScr_CompareImage()
+{
+    if (Scr_GetNumParam() != 2)
+        Scr_Error("Usage: compareimage(<image1>, <image2>)");
+
+    CompareImages(
+        Scr_GetString(0),
+        Scr_GetString(1));
+}
+
+static void DumpImageAsset(const char* name)
+{
+    auto asset = DB_FindXAssetHeader(
+        XAssetType::ASSET_TYPE_IMAGE,
+        name);
+
+    if (!asset.image)
+    {
+        DbgPrint("Image '%s' not found.", name);
+        return;
+    }
+
+    uint32_t ptr = *(uint32_t*)((char*)asset.image + 0x6C);
+
+    DumpAssetPointer(ptr);
+}
+
+static void GScr_DumpImageAsset()
+{
+    if (Scr_GetNumParam() != 1)
+        Scr_Error("Usage: dumpimageasset(<image>)");
+
+    DumpImageAsset(Scr_GetString(0));
+}
+
 g_scr_main::g_scr_main()
 {
     Scr_GetFunction_Detour = Detour(Scr_GetFunction, Scr_GetFunction_Hook);
@@ -436,6 +617,9 @@ g_scr_main::g_scr_main()
 	Scr_AddFunction("depatchelevator", GScr_depatchElevator, BUILTIN_ANY);
 	Scr_AddFunction("replaceimage", GScr_ReplaceImage, BUILTIN_ANY);
 	Scr_AddFunction("float", GScr_Float, BUILTIN_ANY);
+	Scr_AddFunction("dumpimage", GScr_DumpImage, BUILTIN_ANY);
+	Scr_AddFunction("dumpimageasset", GScr_DumpImageAsset, BUILTIN_ANY);
+	Scr_AddFunction("compareimages", GScr_CompareImage, BUILTIN_ANY);
 
 	Scr_AddMethod("setgrenadetimeleft", GScr_setGrenadeTimeLeft, BUILTIN_ANY);
 	Scr_AddMethod("doinstashoots", GScr_doInstashoots, BUILTIN_ANY);

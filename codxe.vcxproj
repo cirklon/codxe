@@ -74,6 +74,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <!-- Precompiled header -->
+    <ClCompile Include="src\game\iw4\mp_tu6\components\image_loader.cpp" />
     <ClCompile Include="src\game\iw4\mp_tu6\components\menu.cpp" />
     <ClCompile Include="src\game\t6\mp\components\scr_parser.cpp" />
     <ClCompile Include="src\game\t6\mp\main.cpp" />
@@ -186,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Precompiled header -->
+    <ClInclude Include="src\game\iw4\mp_tu6\components\image_loader.h" />
     <ClInclude Include="src\game\iw4\mp_tu6\components\menu.h" />
     <ClInclude Include="src\game\t6\mp\components\scr_parser.h" />
     <ClInclude Include="src\game\t6\mp\main.h" />
