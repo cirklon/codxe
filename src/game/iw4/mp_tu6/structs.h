@@ -2012,41 +2012,148 @@ struct CardMemory
 
 struct GfxImageStreamData
 {
-	unsigned __int16 width;
-	unsigned __int16 height;
-	unsigned int pixelSize;
+    uint16_t width;
+    uint16_t height;
+    uint32_t pixelSize;
 };
+
+//
+// Xbox 360 Xenos texture fetch constant.
+// Kept opaque until every bitfield has been verified.
+//
+struct GfxImageFetchConstant
+{
+    uint8_t raw[0x34];
+};
+
+static_assert(sizeof(GfxImageFetchConstant) == 0x34, "");
 
 struct GfxImage
 {
-	char _pad_0[52]; //0x00
-	_D3DFORMAT Format; //0x34
-	char mapType; //0x38
-	char semantic; //0x39
-	char category; //0x3A
-	char _padding_3B; //0x3B
-	CardMemory cardMemory; //0x3C
-	short Width; //0x40
-	short Height; //0x42
-	short Depth; //0x44
-	char levelCount; //0x46
-	bool cached; //0x47
-	//Pixels 0x48
-	char* Data; //0x48
-	GfxImageStreamData streams[4]; //0x4C
-	char* Name; //0x6C
+    GfxImageFetchConstant fetchConstant;   // 0x00
+
+    _D3DFORMAT Format;                     // 0x34
+
+    uint8_t mapType;                       // 0x38
+    uint8_t semantic;                      // 0x39
+    uint8_t category;                      // 0x3A
+    uint8_t pad3B;                         // 0x3B
+
+    int32_t cardMemory;                    // 0x3C
+
+    uint16_t Width;                        // 0x40
+    uint16_t Height;                       // 0x42
+    uint16_t Depth;                        // 0x44
+
+    uint8_t levelCount;                    // 0x46
+    bool cached;                           // 0x47
+
+    char* Data;                            // 0x48
+
+    GfxImageStreamData streams[4];         // 0x4C
+
+    //
+    // Offset 0x6C
+    //
+    // On TU6 this is NOT just a strdup'd C-string.
+    // It points to an asset record whose first bytes are the
+    // NUL-terminated image name ("white", "mockup_bgglow", etc.).
+    //
+    // Keep the member named Name for compatibility until the
+    // asset-record structure has been fully reversed.
+    //
+    char* Name;                            // 0x6C
+};
+
+static_assert(offsetof(GfxImage, Format)      == 0x34, "");
+static_assert(offsetof(GfxImage, cardMemory)  == 0x3C, "");
+static_assert(offsetof(GfxImage, Width)       == 0x40, "");
+static_assert(offsetof(GfxImage, Height)      == 0x42, "");
+static_assert(offsetof(GfxImage, levelCount)  == 0x46, "");
+static_assert(offsetof(GfxImage, Data)        == 0x48, "");
+static_assert(offsetof(GfxImage, Name)        == 0x6C, "");
+
+static_assert(sizeof(GfxImage) == 0x70, "");
+
+enum TextureSemantic : uint8_t
+{
+    TS_2D = 0,
+    TS_FUNCTION,
+    TS_COLOR_MAP,
+    TS_DETAIL_MAP,
+    TS_UNUSED_2,
+    TS_NORMAL_MAP,
+    TS_UNUSED_3,
+    TS_UNUSED_4,
+    TS_SPECULAR_MAP,
+    TS_UNUSED_5,
+    TS_UNUSED_6,
+    TS_WATER_MAP,
+};
+
+union MaterialTextureDefInfo
+{
+    GfxImage* image;
+    void* water;
+};
+
+struct MaterialTextureDef
+{
+    uint32_t nameHash;
+    char nameStart;
+    char nameEnd;
+    char samplerState;
+    TextureSemantic semantic;
+    MaterialTextureDefInfo u;
+};
+
+struct MaterialInfo
+{
+    const char* name;
+    uint8_t gameFlags;
+    uint8_t sortKey;
+    uint8_t textureAtlasRowCount;
+    uint8_t textureAtlasColumnCount;
+    uint64_t drawSurf;
+    uint32_t surfaceTypeBits;
+    uint16_t hashIndex;
+};
+
+struct MaterialTechniqueSet;
+struct MaterialConstantDef;
+struct GfxStateBits;
+
+struct Material
+{
+    MaterialInfo info;
+
+    char stateBitsEntry[48];
+
+    uint8_t textureCount;
+    uint8_t constantCount;
+    uint8_t stateBitsCount;
+    char stateFlags;
+    char cameraRegion;
+
+    MaterialTechniqueSet* techniqueSet;
+    MaterialTextureDef* textureTable;
+    MaterialConstantDef* constantTable;
+    GfxStateBits* stateBitsTable;
 };
 
 union XAssetHeader
 {
-    clipMap_t *clipMap;
-    GameWorldSp *gameWorldSp;
-    GameWorldMp *gameWorldMp;
-    MapEnts *mapEnts;
-    RawFile *rawfile;
-    StringTable *stringTable;
-	GfxImage *image;
-    void *data;
+    clipMap_t* clipMap;
+    GameWorldSp* gameWorldSp;
+    GameWorldMp* gameWorldMp;
+    MapEnts* mapEnts;
+    RawFile* rawfile;
+    StringTable* stringTable;
+
+    Material* material;   // ASSET_TYPE_MATERIAL (5)
+    GfxImage* image;       // ASSET_TYPE_IMAGE (8)
+
+    void* data;
 };
 
 struct XAsset
